@@ -1,1 +1,3 @@
-# Gelir-Gider---Para-Yonetimi
+# flutter_app
+
+A new Flutter project.
