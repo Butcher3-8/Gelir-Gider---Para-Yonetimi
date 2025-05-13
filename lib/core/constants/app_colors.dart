@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color primary = Color(0xFF2C7BE5);
+  static const Color primary = Color.fromRGBO(44, 123, 229, 1);
   static const Color income = Color.fromARGB(255, 27, 107, 47);
   static const Color expense = Color.fromARGB(255, 129, 37, 32);
   static const Color background = Color.fromARGB(255, 185, 185, 185);  // Koyu arka plan rengi

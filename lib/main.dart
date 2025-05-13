@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/routes.dart'; // router dosyan
 
 void main() {
@@ -15,6 +16,15 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
+      locale: const Locale('tr', 'TR'),
+      supportedLocales: const [
+        Locale('tr', 'TR'),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       routerConfig: router, // GoRouter yapılandırması burada
       debugShowCheckedModeBanner: false,
     );
