@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Tarih formatı için gerekli
+import 'package:intl/intl.dart';
 import '../models/transaction.dart';
 import '../core/constants/app_colors.dart';
 
 class LastTransactions extends StatelessWidget {
   final List<Transaction> transactions;
+  final Function(Transaction) onDelete;
+  final Function(Transaction) onEdit;
 
-  const LastTransactions({super.key, required this.transactions});
+  const LastTransactions({
+    super.key, 
+    required this.transactions,
+    required this.onDelete,
+    required this.onEdit,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,24 +29,91 @@ class LastTransactions extends StatelessWidget {
       );
     }
 
+    // En son eklenen işlemler en üstte gösterilecek
+    final displayedTransactions = transactions.reversed.take(5).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: transactions.reversed.take(5).map((tx) {
-        return ListTile(
-          leading: CircleAvatar(
-            backgroundColor: tx.type == 'expense' ? AppColors.expense : AppColors.income,
-            child: Icon(
-              tx.type == 'expense' ? Icons.arrow_upward : Icons.arrow_downward,
+      children: displayedTransactions.map((tx) {
+        return Dismissible(
+          key: Key(tx.hashCode.toString()), // Benzersiz bir key
+          background: Container(
+            color: Colors.red,
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            child: const Icon(
+              Icons.delete,
               color: Colors.white,
             ),
           ),
-          title: Text(tx.category),
-          subtitle: Text(tx.description),
-          trailing: Text(
-            '${tx.amount.toStringAsFixed(2)} ₺',
-            style: TextStyle(
-              color: tx.type == 'expense' ? AppColors.expense : AppColors.income,
-              fontWeight: FontWeight.bold,
+          direction: DismissDirection.endToStart,
+          confirmDismiss: (direction) async {
+            return await showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('İşlemi Sil'),
+                  content: const Text('Bu işlemi silmek istediğinizden emin misiniz?'),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text('İptal'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: const Text('Sil'),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+          onDismissed: (direction) {
+            onDelete(tx);
+          },
+          child: Card(
+            margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+            elevation: 2,
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: tx.type == 'expense' ? AppColors.expense : AppColors.income,
+                child: Icon(
+                  tx.type == 'expense' ? Icons.arrow_upward : Icons.arrow_downward,
+                  color: Colors.white,
+                ),
+              ),
+              title: Text(
+                tx.category,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(tx.description),
+                  Text(
+                    DateFormat('dd.MM.yyyy - HH:mm').format(tx.dateTime),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${tx.amount.toStringAsFixed(2)} ₺',
+                    style: TextStyle(
+                      color: tx.type == 'expense' ? AppColors.expense : AppColors.income,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit, size: 20),
+                    color: Colors.grey,
+                    onPressed: () => onEdit(tx),
+                  ),
+                ],
+              ),
             ),
           ),
         );

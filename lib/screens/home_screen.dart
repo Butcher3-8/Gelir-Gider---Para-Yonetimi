@@ -25,6 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool _isExpensePopupVisible = false;
   bool _isIncomePopupVisible = false;
+  bool _isEditMode = false;
+  late Transaction _transactionToEdit;
 
   final List<Transaction> _transactions = [];
 
@@ -45,6 +47,56 @@ class _HomeScreenState extends State<HomeScreen> {
       } else {
         _incomeScale = 1.0;
       }
+    });
+  }
+
+  // İşlem silme fonksiyonu
+  void _deleteTransaction(Transaction transaction) {
+    setState(() {
+      _transactions.remove(transaction);
+    });
+    
+    // Silme işlemi başarılı bildirimi
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('İşlem silindi'),
+        backgroundColor: Colors.red,
+        action: SnackBarAction(
+          label: 'Geri Al',
+          textColor: Colors.white,
+          onPressed: () {
+            setState(() {
+              _transactions.add(transaction);
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  // İşlem düzenleme fonksiyonu
+  void _editTransaction(Transaction transaction) {
+    setState(() {
+      _isEditMode = true;
+      _transactionToEdit = transaction;
+      
+      // İşlem tipine göre uygun popup'ı göster
+      if (transaction.type == 'expense') {
+        _isExpensePopupVisible = true;
+      } else {
+        _isIncomePopupVisible = true;
+      }
+    });
+  }
+
+  // Düzenlenen işlemi güncelleme fonksiyonu
+  void _updateTransaction(Transaction updatedTransaction) {
+    setState(() {
+      int index = _transactions.indexOf(_transactionToEdit);
+      if (index != -1) {
+        _transactions[index] = updatedTransaction;
+      }
+      _isEditMode = false;
     });
   }
 
@@ -248,7 +300,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     : Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: SingleChildScrollView(
-                          child: LastTransactions(transactions: transactions),
+                          child: LastTransactions(
+                            transactions: transactions,
+                            onDelete: _deleteTransaction,
+                            onEdit: _editTransaction,
+                          ),
                         ),
                       ),
               ),
@@ -276,6 +332,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           onTapCancel: () => _onTapUp('expense'),
                           onTap: () {
                             setState(() {
+                              _isEditMode = false;
                               _isExpensePopupVisible = true;
                             });
                           },
@@ -327,6 +384,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           onTapCancel: () => _onTapUp('income'),
                           onTap: () {
                             setState(() {
+                              _isEditMode = false;
                               _isIncomePopupVisible = true;
                             });
                           },
@@ -382,45 +440,101 @@ class _HomeScreenState extends State<HomeScreen> {
               categories: ['Yiyecek', 'Ulaşım', 'Fatura', 'Diğer'],
               onAdd: (category, amount, description, time) {
                 setState(() {
-                  _transactions.add(Transaction(
-                    type: 'expense',
-                    category: category,
-                    amount: amount,
-                    description: description,
-                    dateTime: time,
-                  ));
+                  if (_isEditMode) {
+                    // Düzenleme modu
+                    Transaction updatedTx = Transaction(
+                      type: 'expense',
+                      category: category,
+                      amount: amount,
+                      description: description,
+                      dateTime: time,
+                    );
+                    _updateTransaction(updatedTx);
+                  } else {
+                    // Yeni ekleme modu
+                    _transactions.add(Transaction(
+                      type: 'expense',
+                      category: category,
+                      amount: amount,
+                      description: description,
+                      dateTime: time,
+                    ));
+                  }
                   _isExpensePopupVisible = false;
                 });
               },
               onCancel: () {
                 setState(() {
                   _isExpensePopupVisible = false;
+                  _isEditMode = false;
                 });
-              }, onSubmit: (Transaction tx) {  },
+              },
+              onSubmit: (Transaction tx) {
+                if (_isEditMode) {
+                  _updateTransaction(tx);
+                } else {
+                  setState(() {
+                    _transactions.add(tx);
+                  });
+                }
+                setState(() {
+                  _isExpensePopupVisible = false;
+                  _isEditMode = false;
+                });
+              },
+              initialTransaction: _isEditMode && _transactionToEdit.type == 'expense' ? _transactionToEdit : null,
             ),
           if (_isIncomePopupVisible)
             IncomePopup(
               categories: ['Maaş', 'Burs', 'Harçlık', 'Ek Gelir', 'Diğer'],
               onAdd: (category, amount, description, time) {
                 setState(() {
-                  _transactions.add(Transaction(
-                    type: 'income',
-                    category: category,
-                    amount: amount,
-                    description: description,
-                    dateTime: time,
-                  ));
+                  if (_isEditMode) {
+                    // Düzenleme modu
+                    Transaction updatedTx = Transaction(
+                      type: 'income',
+                      category: category,
+                      amount: amount,
+                      description: description,
+                      dateTime: time,
+                    );
+                    _updateTransaction(updatedTx);
+                  } else {
+                    // Yeni ekleme modu
+                    _transactions.add(Transaction(
+                      type: 'income',
+                      category: category,
+                      amount: amount,
+                      description: description,
+                      dateTime: time,
+                    ));
+                  }
                   _isIncomePopupVisible = false;
                 });
               },
               onCancel: () {
                 setState(() {
                   _isIncomePopupVisible = false;
+                  _isEditMode = false;
                 });
-              }, onSubmit: (Transaction tx) {  },
+              },
+              onSubmit: (Transaction tx) {
+                if (_isEditMode) {
+                  _updateTransaction(tx);
+                } else {
+                  setState(() {
+                    _transactions.add(tx);
+                  });
+                }
+                setState(() {
+                  _isIncomePopupVisible = false;
+                  _isEditMode = false;
+                });
+              },
+              initialTransaction: _isEditMode && _transactionToEdit.type == 'income' ? _transactionToEdit : null,
             ),
         ],
       ),
     );
   }
-}  
+}

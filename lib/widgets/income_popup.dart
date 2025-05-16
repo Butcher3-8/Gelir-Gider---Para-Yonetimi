@@ -11,7 +11,7 @@ class IncomePopup extends StatefulWidget {
     required this.categories,
     required this.onAdd,
     required this.onCancel,
-    super.key, required Null Function(Transaction tx) onSubmit,
+    super.key, required Null Function(Transaction tx) onSubmit, Transaction? initialTransaction,
   });
 
   @override
