@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/screens/transaction_history_screen.dart';
 import 'package:intl/intl.dart'; // Tarih formatı için gerekli
 import 'package:table_calendar/table_calendar.dart';
 import '../core/constants/app_colors.dart';
@@ -62,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Column(
             children: [
-              const SizedBox(height: 100),
+              const SizedBox(height: 85),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: TableCalendar(
@@ -93,12 +94,37 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 9),
               Expanded(
                 child: SingleChildScrollView(
                   child: LastTransactions(transactions: transactions),
                 ),
               ),
+              Align(
+  alignment: Alignment.centerRight,
+  child: Padding(
+    padding: const EdgeInsets.only(right: 9.0, top: 9),
+    child: TextButton(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TransactionHistoryScreen(transactions: _transactions),
+          ),
+        );
+      },
+      child: const Text(
+        "Daha Fazla",
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  ),
+),
+
               Row(
                 children: [
                   Expanded(

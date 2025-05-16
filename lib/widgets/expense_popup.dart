@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class ExpensePopup extends StatefulWidget {
   final List<String> categories;
-  final void Function(String category, double amount, String description, TimeOfDay time) onAdd;
+  final void Function(String category, double amount, String description, DateTime dateTime) onAdd;
   final VoidCallback onCancel;
 
   const ExpensePopup({
@@ -93,11 +93,20 @@ class _ExpensePopupState extends State<ExpensePopup> {
                         onPressed: () {
                           final amount = double.tryParse(_amountController.text) ?? 0.0;
                           if (_selectedCategory != null && amount > 0) {
+                            final now = DateTime.now();
+                            final dateTime = DateTime(
+                              now.year,
+                              now.month,
+                              now.day,
+                              _selectedTime.hour,
+                              _selectedTime.minute,
+                            );
+
                             widget.onAdd(
                               _selectedCategory!,
                               amount,
                               _descriptionController.text,
-                              _selectedTime,
+                              dateTime,
                             );
                           }
                         },

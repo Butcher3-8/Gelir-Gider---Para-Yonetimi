@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class IncomePopup extends StatefulWidget {
   final List<String> categories;
-  final void Function(String category, double amount, String description, TimeOfDay time) onAdd;
+  final void Function(String category, double amount, String description, DateTime dateTime) onAdd;
   final VoidCallback onCancel;
 
   const IncomePopup({
@@ -13,10 +13,10 @@ class IncomePopup extends StatefulWidget {
   });
 
   @override
-  State<IncomePopup> createState() => _ExpensePopupState();
+  State<IncomePopup> createState() => _IncomePopupState();
 }
 
-class _ExpensePopupState extends State<IncomePopup> {
+class _IncomePopupState extends State<IncomePopup> {
   String? _selectedCategory;
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -50,7 +50,7 @@ class _ExpensePopupState extends State<IncomePopup> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  const Text("Gider Ekle", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text("Gelir Ekle", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     value: _selectedCategory,
@@ -93,11 +93,20 @@ class _ExpensePopupState extends State<IncomePopup> {
                         onPressed: () {
                           final amount = double.tryParse(_amountController.text) ?? 0.0;
                           if (_selectedCategory != null && amount > 0) {
+                            final now = DateTime.now();
+                            final dateTime = DateTime(
+                              now.year,
+                              now.month,
+                              now.day,
+                              _selectedTime.hour,
+                              _selectedTime.minute,
+                            );
+
                             widget.onAdd(
                               _selectedCategory!,
                               amount,
                               _descriptionController.text,
-                              _selectedTime,
+                              dateTime,
                             );
                           }
                         },
