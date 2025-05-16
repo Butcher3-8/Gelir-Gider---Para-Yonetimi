@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 
-class CustomDrawer extends StatelessWidget {
+class CustomDrawer extends StatefulWidget {
   const CustomDrawer({super.key});
+
+  @override
+  State<CustomDrawer> createState() => _CustomDrawerState();
+}
+
+class _CustomDrawerState extends State<CustomDrawer> {
+  bool isDarkMode = false;
 
   @override
   Widget build(BuildContext context) {
@@ -20,30 +27,32 @@ class CustomDrawer extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
+            // Drawer Header
             DrawerHeader(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color(0xFF5D9CEC),
-                    Color(0xFF4A89DC),
+                    Color(0xFF4CAF50),
+                    Color(0xFF388E3C),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
               ),
-              child: Row(
-                children: const [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.account_circle,
-                      size: 40,
-                      color: Color(0xFF4A89DC),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(50),
+                    child: Image.asset(
+                      'assets/images/fotoo.png',
+                      height: 90,
+                      width: 160,
+                      fit: BoxFit.cover,
                     ),
                   ),
-                  SizedBox(width: 16),
-                  Text(
+                  const SizedBox(height: 12),
+                  const Text(
                     'Menü',
                     style: TextStyle(
                       color: Colors.white,
@@ -55,51 +64,40 @@ class CustomDrawer extends StatelessWidget {
               ),
             ),
 
-            // Uygulama Teması
+            // Uygulama Teması satırı
             ListTile(
-              leading: const Icon(Icons.brightness_6_outlined, color: Colors.black87),
+              leading: const Icon(Icons.brightness_6, color: Colors.black87),
               title: const Text('Uygulama Teması'),
-              onTap: () {
-                // TODO: Temayı değiştir
-              },
-            ),
-
-            // Dil
-            ListTile(
-              leading: const Icon(Icons.language, color: Colors.black87),
-              title: const Text('Dil'),
-              onTap: () {
-                // TODO: Dili değiştir
-              },
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(isDarkMode ? Icons.nightlight_round : Icons.wb_sunny,
+                      color: isDarkMode ? const Color.fromARGB(255, 0, 0, 0) : Colors.orangeAccent),
+                  Switch(
+                    value: isDarkMode,
+                    onChanged: (value) {
+                      setState(() {
+                        isDarkMode = value;
+                        // Şu an için sadece görsel olarak çalışıyor.
+                      });
+                    },
+                  ),
+                ],
+              ),
             ),
 
             const Divider(),
 
-            // Hakkında
-            ListTile(
-              leading: const Icon(Icons.info_outline, color: Colors.black87),
-              title: const Text('Hakkında'),
-              onTap: () {
-                // TODO: Hakkında sayfasına git
-              },
+            // Dil Ayarı
+            const ListTile(
+              leading: Icon(Icons.language, color: Colors.black87),
+              title: Text('Dil'),
             ),
 
-            // Ayarlar
-            ListTile(
-              leading: const Icon(Icons.settings, color: Colors.black87),
-              title: const Text('Ayarlar'),
-              onTap: () {
-                // TODO: Ayarlara git
-              },
-            ),
-
-            // Uygulama
-            ListTile(
-              leading: const Icon(Icons.analytics_outlined, color: Colors.black87),
-              title: const Text('Uygulama'),
-              onTap: () {
-                // TODO: Uygulama analiz sayfasına git
-              },
+            // İletişim
+            const ListTile(
+              leading: Icon(Icons.contact_mail, color: Colors.black87),
+              title: Text('İletişim'),
             ),
           ],
         ),
