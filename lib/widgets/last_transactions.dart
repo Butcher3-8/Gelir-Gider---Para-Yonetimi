@@ -56,13 +56,19 @@ class LastTransactions extends StatelessWidget {
                   content: const Text('Bu işlemi silmek istediğinizden emin misiniz?'),
                   actions: <Widget>[
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(false),
-                      child: const Text('İptal'),
-                    ),
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: const Text(
+                            'İptal',
+                      style: TextStyle(color: Color.fromARGB(255, 0, 0, 0)), // Burayı istediğin renkle değiştirebilirsin
+                     ),
+                      ),
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(true),
-                      child: const Text('Sil'),
-                    ),
+                      child: const Text(
+                            'Sil',
+                      style: TextStyle(color: Color.fromARGB(255, 0, 0, 0)), // Burayı istediğin renkle değiştirebilirsin
+                     ),
+                      ),
                   ],
                 );
               },
@@ -102,7 +108,7 @@ class LastTransactions extends StatelessWidget {
                   Text(
                     '${tx.amount.toStringAsFixed(2)} ₺',
                     style: TextStyle(
-                      color: tx.type == 'expense' ? AppColors.expense : AppColors.income,
+                      color: tx.type == 'expense' ? const Color.fromARGB(255, 202, 32, 23) : AppColors.income,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),

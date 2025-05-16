@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import 'package:intl/intl.dart';
+import '../core/constants/app_colors.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
   final List<Transaction> transactions;
@@ -28,6 +29,18 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       initialDate: selectedDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.income, // Tarih seçici için ana renk
+              onPrimary: Colors.white, // Seçili tarih metni rengi
+              onSurface: Colors.black, // Takvim metni rengi
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null && picked != selectedDate) {
       setState(() {
@@ -39,52 +52,146 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 185, 185, 185), // ✅ Arka plan rengi
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-  title: const Text("Geçmiş İşlemler"),
-  backgroundColor: const Color.fromARGB(255, 185, 185, 185), // ✅ AppBar rengi düzeltildi
-  elevation: 0, // Daha modern görünüm için istersen gölgeyi kaldırır
-),
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
+        title: const Text(
+          'Geçmiş İşlemler',
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: Column(
         children: [
-          const SizedBox(height: 16),
-          TextButton(
-            onPressed: _selectDate,
-            child: Text(
-              "Tarih Seç: ${DateFormat('dd MMMM yyyy', 'tr_TR').format(selectedDate)}",
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.black, // ✅ Siyah renk
+          // Tarih seçim kartı
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: InkWell(
+                onTap: _selectDate,
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        DateFormat('dd MMMM yyyy', 'tr_TR').format(selectedDate),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Icon(
+                        Icons.calendar_today,
+                        color: Colors.black54,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          
+          // İşlemler listesi
           Expanded(
             child: filteredTransactions.isEmpty
-                ? const Center(child: Text("Bu tarihte işlem yok"))
-                : ListView.builder(
-                    itemCount: filteredTransactions.length,
-                    itemBuilder: (ctx, i) {
-                      final tx = filteredTransactions[i];
-                      return ListTile(
-                        leading: Icon(
-                          tx.type == 'income' ? Icons.arrow_downward : Icons.arrow_upward,
-                          color: tx.type == 'income' ? Colors.green : Colors.red,
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.history,
+                        size: 64,
+                        color: Colors.black26,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Bu tarihte işlem yok',
+                        style: TextStyle(
+                          color: Colors.black54,
+                          fontSize: 16,
                         ),
-                        title: Text("${tx.category} - ${tx.description}"),
-                        subtitle: Text(DateFormat('HH:mm').format(tx.dateTime)),
-                        trailing: Text(
-                          "${tx.amount.toStringAsFixed(2)}₺",
-                          style: TextStyle(
-                            color: tx.type == 'income' ? Colors.green : Colors.red,
-                            fontWeight: FontWeight.bold,
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(8),
+                  itemCount: filteredTransactions.length,
+                  itemBuilder: (ctx, i) {
+                    final tx = filteredTransactions[i];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        leading: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: tx.type == 'income'
+                                ? AppColors.income.withOpacity(0.2)
+                                : AppColors.expense.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            tx.type == 'income'
+                                ? Icons.arrow_downward
+                                : Icons.arrow_upward,
+                            color: tx.type == 'income'
+                                ? AppColors.income
+                                : AppColors.expense,
                           ),
                         ),
-                      );
-                    },
-                  ),
-          )
+                        title: Text(
+                          "${tx.category}",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(tx.description),
+                            const SizedBox(height: 4),
+                            Text(
+                              DateFormat('HH:mm', 'tr_TR').format(tx.dateTime),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
+                        trailing: Text(
+                          "${tx.type == 'income' ? '+' : '-'}${NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 2).format(tx.amount)}",
+                          style: TextStyle(
+                            color: tx.type == 'income'
+                                ? AppColors.income
+                                : AppColors.expense,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+          ),
         ],
       ),
     );

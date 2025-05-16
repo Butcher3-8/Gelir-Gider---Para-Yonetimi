@@ -299,7 +299,10 @@ class _ExpensePopupState extends State<ExpensePopup> {
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
-                        child: Text(widget.initialTransaction != null ? 'Güncelle' : 'Ekle'),
+                                child: Text(
+                          widget.initialTransaction != null ? 'Güncelle' : 'Ekle',
+                          style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255)), // <-- Sadece burası eklendi
+                        ),
                       ),
                     ),
                   ],

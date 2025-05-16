@@ -32,14 +32,12 @@ class _IncomePopupState extends State<IncomePopup> {
   void initState() {
     super.initState();
     
-    // Düzenleme modunda varsayılan değerleri ayarla
     if (widget.initialTransaction != null) {
       _selectedCategory = widget.initialTransaction!.category;
       _amountController = TextEditingController(text: widget.initialTransaction!.amount.toString());
       _descriptionController = TextEditingController(text: widget.initialTransaction!.description);
       _selectedDate = widget.initialTransaction!.dateTime;
     } else {
-      // Yeni ekleme modunda varsayılan değerleri ayarla
       _selectedCategory = widget.categories.first;
       _amountController = TextEditingController();
       _descriptionController = TextEditingController();
@@ -84,7 +82,7 @@ class _IncomePopupState extends State<IncomePopup> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {}, // Boş onTap ile popup dışına tıklamayı engelleme
+      onTap: () {},
       child: Container(
         color: Colors.black.withOpacity(0.5),
         child: Center(
@@ -237,7 +235,6 @@ class _IncomePopupState extends State<IncomePopup> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          // Form validasyonu
                           if (_amountController.text.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -271,9 +268,7 @@ class _IncomePopupState extends State<IncomePopup> {
                             return;
                           }
 
-                          // Formu gönder
                           if (widget.initialTransaction != null) {
-                            // Düzenleme modu, yeni bir transaction oluştur
                             final updatedTransaction = Transaction(
                               type: 'income',
                               category: _selectedCategory,
@@ -283,7 +278,6 @@ class _IncomePopupState extends State<IncomePopup> {
                             );
                             widget.onSubmit(updatedTransaction);
                           } else {
-                            // Yeni ekleme modu
                             widget.onAdd(
                               _selectedCategory,
                               amount,
@@ -299,7 +293,10 @@ class _IncomePopupState extends State<IncomePopup> {
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
-                        child: Text(widget.initialTransaction != null ? 'Güncelle' : 'Ekle'),
+                        child: Text(
+                          widget.initialTransaction != null ? 'Güncelle' : 'Ekle',
+                          style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255)), // <-- Sadece burası eklendi
+                        ),
                       ),
                     ),
                   ],
