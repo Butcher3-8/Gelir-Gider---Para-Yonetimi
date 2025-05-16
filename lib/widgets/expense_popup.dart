@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
-import '../core/constants/app_colors.dart';
+import '../constants/app_colors.dart';
 
 class ExpensePopup extends StatefulWidget {
   final List<String> categories;

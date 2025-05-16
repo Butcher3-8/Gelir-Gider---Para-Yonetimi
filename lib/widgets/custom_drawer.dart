@@ -9,6 +9,15 @@ class CustomDrawer extends StatefulWidget {
 
 class _CustomDrawerState extends State<CustomDrawer> {
   bool isDarkMode = false;
+  String selectedLanguage = 'Türkçe';
+
+  final List<String> languages = [
+    'Türkçe',
+    'İngilizce',
+    'Almanca',
+    'Fransızca',
+    'İspanyolca',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -71,14 +80,15 @@ class _CustomDrawerState extends State<CustomDrawer> {
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(isDarkMode ? Icons.nightlight_round : Icons.wb_sunny,
-                      color: isDarkMode ? const Color.fromARGB(255, 0, 0, 0) : Colors.orangeAccent),
+                  Icon(
+                    isDarkMode ? Icons.nightlight_round : Icons.wb_sunny,
+                    color: isDarkMode ? Colors.amber : Colors.orangeAccent,
+                  ),
                   Switch(
                     value: isDarkMode,
                     onChanged: (value) {
                       setState(() {
                         isDarkMode = value;
-                        // Şu an için sadece görsel olarak çalışıyor.
                       });
                     },
                   ),
@@ -88,10 +98,21 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
             const Divider(),
 
-            // Dil Ayarı
-            const ListTile(
-              leading: Icon(Icons.language, color: Colors.black87),
-              title: Text('Dil'),
+            // Dil Seçimi (aşağı yönlü ok ve açılır menü)
+            ExpansionTile(
+              leading: const Icon(Icons.language, color: Colors.black87),
+              title: Text('Dil: $selectedLanguage'),
+              children: languages.map((lang) {
+                return ListTile(
+                  title: Text(lang),
+                  onTap: () {
+                    setState(() {
+                      selectedLanguage = lang;
+                    });
+                    Navigator.pop(context); // Menü kapanır
+                  },
+                );
+              }).toList(),
             ),
 
             // İletişim

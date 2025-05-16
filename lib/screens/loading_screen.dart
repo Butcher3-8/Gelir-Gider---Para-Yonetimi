@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
-import '../core/constants/app_colors.dart'; // renk sabitleri için
+import '../constants/app_colors.dart'; // renk sabitleri için
 
 class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key});

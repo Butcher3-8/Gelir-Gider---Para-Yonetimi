@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/transaction.dart';
-import '../core/constants/app_colors.dart';
+import '../constants/app_colors.dart';
 
 class LastTransactions extends StatelessWidget {
   final List<Transaction> transactions;

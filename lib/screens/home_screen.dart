@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/screens/transaction_history_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
-import '../core/constants/app_colors.dart';
+import '../constants/app_colors.dart';
 import '../widgets/custom_drawer.dart';
 import '../widgets/expense_popup.dart';
 import '../widgets/income_popup.dart';
@@ -29,6 +29,16 @@ class _HomeScreenState extends State<HomeScreen> {
   late Transaction _transactionToEdit;
 
   final List<Transaction> _transactions = [];
+  
+  // Takvim olayları için Map
+  late Map<DateTime, List<Transaction>> _events;
+  
+  @override
+  void initState() {
+    super.initState();
+    _selectedDay = _focusedDay;
+    _events = {};
+  }
 
   void _onTapDown(String type) {
     setState(() {
@@ -54,6 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _deleteTransaction(Transaction transaction) {
     setState(() {
       _transactions.remove(transaction);
+      _updateEvents(); // Olayları güncelle
     });
     
     // Silme işlemi başarılı bildirimi
@@ -67,6 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
           onPressed: () {
             setState(() {
               _transactions.add(transaction);
+              _updateEvents(); // Olayları güncelle
             });
           },
         ),
@@ -97,6 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _transactions[index] = updatedTransaction;
       }
       _isEditMode = false;
+      _updateEvents(); // Olayları güncelle
     });
   }
 
@@ -112,9 +125,74 @@ class _HomeScreenState extends State<HomeScreen> {
     
     return income - expense;
   }
+  
+  // Tarihe göre olayları grupla
+  void _updateEvents() {
+    _events = {};
+    for (var transaction in _transactions) {
+      // Sadece yıl, ay ve gün ile DateTime oluştur
+      final eventDate = DateTime(
+        transaction.dateTime.year,
+        transaction.dateTime.month,
+        transaction.dateTime.day,
+      );
+      
+      if (_events[eventDate] != null) {
+        _events[eventDate]!.add(transaction);
+      } else {
+        _events[eventDate] = [transaction];
+      }
+    }
+  }
+  
+  // Belirli bir tarih için olaylar listesini getir
+  List<Transaction> _getEventsForDay(DateTime day) {
+    final normalizedDay = DateTime(day.year, day.month, day.day);
+    return _events[normalizedDay] ?? [];
+  }
+  
+  // Belirli bir tarih için gelir/gider işareti göster
+  Widget _buildMarkers(DateTime day, List<Transaction> events) {
+    if (events.isEmpty) return Container();
+    
+    bool hasIncome = events.any((tx) => tx.type == 'income');
+    bool hasExpense = events.any((tx) => tx.type == 'expense');
+    
+    return Positioned(
+      bottom: 1,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (hasIncome)
+            Container(
+              width: 6,
+              height: 6,
+              margin: const EdgeInsets.symmetric(horizontal: 1),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.income,
+              ),
+            ),
+          if (hasExpense)
+            Container(
+              width: 6,
+              height: 6,
+              margin: const EdgeInsets.symmetric(horizontal: 1),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.expense,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Olay listesini güncelle
+    _updateEvents();
+    
     var transactions = _transactions;
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -124,7 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
         title: const Text(
-          'Para Yöneticim',
+          'Gelir Gider Yönetimi',
           style: TextStyle(
             color: Colors.black87,
             fontWeight: FontWeight.bold,
@@ -231,6 +309,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         leftChevronIcon: Icon(Icons.chevron_left, color: Colors.black54),
                         rightChevronIcon: Icon(Icons.chevron_right, color: Colors.black54),
                       ),
+                      eventLoader: _getEventsForDay,
+calendarBuilders: CalendarBuilders(
+  markerBuilder: (context, day, events) {
+    final txEvents = events.cast<Transaction>();
+    return _buildMarkers(day, txEvents);
+  },
+),
                     ),
                   ),
                 ),
@@ -437,7 +522,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // Popup'lar
           if (_isExpensePopupVisible)
             ExpensePopup(
-              categories: ['Yiyecek', 'Ulaşım', 'Fatura', 'Diğer'],
+              categories: ['Yiyecek', 'Ulaşım', 'Fatura', 'Alışveriş', 'Verilen Borç','Eğlence', 'Diğer'],
               onAdd: (category, amount, description, time) {
                 setState(() {
                   if (_isEditMode) {
@@ -459,6 +544,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       description: description,
                       dateTime: time,
                     ));
+                    _updateEvents(); // Olayları güncelle
                   }
                   _isExpensePopupVisible = false;
                 });
@@ -475,6 +561,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 } else {
                   setState(() {
                     _transactions.add(tx);
+                    _updateEvents(); // Olayları güncelle
                   });
                 }
                 setState(() {
@@ -486,7 +573,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           if (_isIncomePopupVisible)
             IncomePopup(
-              categories: ['Maaş', 'Burs', 'Harçlık', 'Ek Gelir', 'Diğer'],
+              categories: ['Maaş', 'Burs', 'Harçlık', 'Ek Gelir', 'Alınan Borç', 'Diğer'],
               onAdd: (category, amount, description, time) {
                 setState(() {
                   if (_isEditMode) {
@@ -508,6 +595,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       description: description,
                       dateTime: time,
                     ));
+                    _updateEvents(); // Olayları güncelle
                   }
                   _isIncomePopupVisible = false;
                 });
@@ -524,6 +612,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 } else {
                   setState(() {
                     _transactions.add(tx);
+                    _updateEvents(); // Olayları güncelle
                   });
                 }
                 setState(() {
