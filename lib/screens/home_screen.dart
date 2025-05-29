@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/screens/transaction_history_screen.dart';
+import 'package:flutter_app/screens/category_screen.dart'; // Eklenen import
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../constants/app_colors.dart';
 import '../widgets/custom_drawer.dart';
 import '../widgets/expense_popup.dart';
@@ -28,7 +30,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isEditMode = false;
   late Transaction _transactionToEdit;
 
-  final List<Transaction> _transactions = [];
+  late Box<Transaction> _transactionBox;
+  List<Transaction> _transactions = [];
   
   // Takvim olayları için Map
   late Map<DateTime, List<Transaction>> _events;
@@ -38,6 +41,45 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _selectedDay = _focusedDay;
     _events = {};
+    _openBox();
+  }
+
+  // Hive box'ını aç ve verileri yükle
+  Future<void> _openBox() async {
+    _transactionBox = await Hive.openBox<Transaction>('transactions');
+    _loadTransactions();
+  }
+
+  // Verileri Hive'dan yükle
+  void _loadTransactions() {
+    setState(() {
+      _transactions = _transactionBox.values.toList();
+      _updateEvents();
+    });
+  }
+
+  // Yeni işlem kaydet
+  Future<void> _saveTransaction(Transaction transaction) async {
+    await _transactionBox.add(transaction);
+    _loadTransactions();
+  }
+
+  // İşlem güncelle
+  Future<void> _updateTransactionInBox(Transaction oldTransaction, Transaction newTransaction) async {
+    final index = _transactionBox.values.toList().indexOf(oldTransaction);
+    if (index != -1) {
+      await _transactionBox.putAt(index, newTransaction);
+      _loadTransactions();
+    }
+  }
+
+  // İşlem sil
+  Future<void> _deleteTransactionFromBox(Transaction transaction) async {
+    final index = _transactionBox.values.toList().indexOf(transaction);
+    if (index != -1) {
+      await _transactionBox.deleteAt(index);
+      _loadTransactions();
+    }
   }
 
   void _onTapDown(String type) {
@@ -62,10 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // İşlem silme fonksiyonu
   void _deleteTransaction(Transaction transaction) {
-    setState(() {
-      _transactions.remove(transaction);
-      _updateEvents(); // Olayları güncelle
-    });
+    _deleteTransactionFromBox(transaction);
     
     // Silme işlemi başarılı bildirimi
     ScaffoldMessenger.of(context).showSnackBar(
@@ -76,10 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
           label: 'Geri Al',
           textColor: Colors.white,
           onPressed: () {
-            setState(() {
-              _transactions.add(transaction);
-              _updateEvents(); // Olayları güncelle
-            });
+            _saveTransaction(transaction);
           },
         ),
       ),
@@ -103,13 +139,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Düzenlenen işlemi güncelleme fonksiyonu
   void _updateTransaction(Transaction updatedTransaction) {
+    _updateTransactionInBox(_transactionToEdit, updatedTransaction);
     setState(() {
-      int index = _transactions.indexOf(_transactionToEdit);
-      if (index != -1) {
-        _transactions[index] = updatedTransaction;
-      }
       _isEditMode = false;
-      _updateEvents(); // Olayları güncelle
     });
   }
 
@@ -189,11 +221,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  void dispose() {
+    // Box'ı kapat
+    Hive.box<Transaction>('transactions').close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Olay listesini güncelle
     _updateEvents();
     
-    var transactions = _transactions;
     return Scaffold(
       backgroundColor: AppColors.background,
       drawer: const CustomDrawer(),
@@ -211,8 +249,16 @@ class _HomeScreenState extends State<HomeScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
+            icon: const Icon(Icons.category),
+            onPressed: () {
+              // Category screen'e yönlendirme eklendi
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CategoryScreen(transactions: _transactions),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -310,12 +356,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         rightChevronIcon: Icon(Icons.chevron_right, color: Colors.black54),
                       ),
                       eventLoader: _getEventsForDay,
-calendarBuilders: CalendarBuilders(
-  markerBuilder: (context, day, events) {
-    final txEvents = events.cast<Transaction>();
-    return _buildMarkers(day, txEvents);
-  },
-),
+                      calendarBuilders: CalendarBuilders(
+                        markerBuilder: (context, day, events) {
+                          final txEvents = events.cast<Transaction>();
+                          return _buildMarkers(day, txEvents);
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -361,7 +407,7 @@ calendarBuilders: CalendarBuilders(
               const SizedBox(height: 8),
               // Son işlemler listesi
               Expanded(
-                child: transactions.isEmpty
+                child: _transactions.isEmpty
                     ? const Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -386,7 +432,7 @@ calendarBuilders: CalendarBuilders(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: SingleChildScrollView(
                           child: LastTransactions(
-                            transactions: transactions,
+                            transactions: _transactions,
                             onDelete: _deleteTransaction,
                             onEdit: _editTransaction,
                           ),
@@ -524,28 +570,28 @@ calendarBuilders: CalendarBuilders(
             ExpensePopup(
               categories: ['Yiyecek', 'Ulaşım', 'Fatura', 'Alışveriş', 'Verilen Borç','Eğlence', 'Diğer'],
               onAdd: (category, amount, description, time) {
+                if (_isEditMode) {
+                  // Düzenleme modu
+                  Transaction updatedTx = Transaction(
+                    type: 'expense',
+                    category: category,
+                    amount: amount,
+                    description: description,
+                    dateTime: time,
+                  );
+                  _updateTransaction(updatedTx);
+                } else {
+                  // Yeni ekleme modu
+                  Transaction newTx = Transaction(
+                    type: 'expense',
+                    category: category,
+                    amount: amount,
+                    description: description,
+                    dateTime: time,
+                  );
+                  _saveTransaction(newTx);
+                }
                 setState(() {
-                  if (_isEditMode) {
-                    // Düzenleme modu
-                    Transaction updatedTx = Transaction(
-                      type: 'expense',
-                      category: category,
-                      amount: amount,
-                      description: description,
-                      dateTime: time,
-                    );
-                    _updateTransaction(updatedTx);
-                  } else {
-                    // Yeni ekleme modu
-                    _transactions.add(Transaction(
-                      type: 'expense',
-                      category: category,
-                      amount: amount,
-                      description: description,
-                      dateTime: time,
-                    ));
-                    _updateEvents(); // Olayları güncelle
-                  }
                   _isExpensePopupVisible = false;
                 });
               },
@@ -559,10 +605,7 @@ calendarBuilders: CalendarBuilders(
                 if (_isEditMode) {
                   _updateTransaction(tx);
                 } else {
-                  setState(() {
-                    _transactions.add(tx);
-                    _updateEvents(); // Olayları güncelle
-                  });
+                  _saveTransaction(tx);
                 }
                 setState(() {
                   _isExpensePopupVisible = false;
@@ -575,28 +618,28 @@ calendarBuilders: CalendarBuilders(
             IncomePopup(
               categories: ['Maaş', 'Burs', 'Harçlık', 'Ek Gelir', 'Alınan Borç', 'Diğer'],
               onAdd: (category, amount, description, time) {
+                if (_isEditMode) {
+                  // Düzenleme modu
+                  Transaction updatedTx = Transaction(
+                    type: 'income',
+                    category: category,
+                    amount: amount,
+                    description: description,
+                    dateTime: time,
+                  );
+                  _updateTransaction(updatedTx);
+                } else {
+                  // Yeni ekleme modu
+                  Transaction newTx = Transaction(
+                    type: 'income',
+                    category: category,
+                    amount: amount,
+                    description: description,
+                    dateTime: time,
+                  );
+                  _saveTransaction(newTx);
+                }
                 setState(() {
-                  if (_isEditMode) {
-                    // Düzenleme modu
-                    Transaction updatedTx = Transaction(
-                      type: 'income',
-                      category: category,
-                      amount: amount,
-                      description: description,
-                      dateTime: time,
-                    );
-                    _updateTransaction(updatedTx);
-                  } else {
-                    // Yeni ekleme modu
-                    _transactions.add(Transaction(
-                      type: 'income',
-                      category: category,
-                      amount: amount,
-                      description: description,
-                      dateTime: time,
-                    ));
-                    _updateEvents(); // Olayları güncelle
-                  }
                   _isIncomePopupVisible = false;
                 });
               },
@@ -610,10 +653,7 @@ calendarBuilders: CalendarBuilders(
                 if (_isEditMode) {
                   _updateTransaction(tx);
                 } else {
-                  setState(() {
-                    _transactions.add(tx);
-                    _updateEvents(); // Olayları güncelle
-                  });
+                  _saveTransaction(tx);
                 }
                 setState(() {
                   _isIncomePopupVisible = false;

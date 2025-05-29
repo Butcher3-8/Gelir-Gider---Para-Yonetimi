@@ -1,8 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'core/routes.dart'; // router dosyan
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-void main() {
+import 'core/routes.dart'; // router dosyan
+import 'models/transaction.dart'; // Transaction modelin
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Hive'ı başlat
+  await Hive.initFlutter();
+
+  // Transaction adapter'ını kaydet
+  Hive.registerAdapter(TransactionAdapter());
+
+  // Türkçe tarih formatını başlat
+  await initializeDateFormatting('tr_TR', null);
+
   runApp(const MyApp());
 }
 
