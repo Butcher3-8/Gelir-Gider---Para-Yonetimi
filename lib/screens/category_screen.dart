@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/providers/currency_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../models/transaction.dart';
 import '../constants/app_colors.dart';
+import '../providers/currency_provider.dart';
 
 class CategoryScreen extends StatefulWidget {
   final List<Transaction> transactions;
@@ -18,7 +21,6 @@ class CategoryScreen extends StatefulWidget {
 class _CategoryScreenState extends State<CategoryScreen> {
   DateTime _selectedMonth = DateTime.now();
   
-  // Kategoriler
   final List<String> _expenseCategories = [
     'Yiyecek', 'Ulaşım', 'Fatura', 'Alışveriş', 
     'Verilen Borç', 'Eğlence', 'Diğer'
@@ -28,23 +30,19 @@ class _CategoryScreenState extends State<CategoryScreen> {
     'Maaş', 'Burs', 'Harçlık', 'Ek Gelir', 'Alınan Borç', 'Diğer'
   ];
 
-  // Seçili ay için kategorik harcamaları hesapla
   Map<String, double> _calculateCategoryExpenses() {
     Map<String, double> categoryExpenses = {};
     
-    // Tüm gider kategorilerini 0 ile başlat
     for (String category in _expenseCategories) {
       categoryExpenses[category] = 0.0;
     }
     
-    // Seçili ay içindeki gider işlemlerini filtrele
     List<Transaction> monthlyExpenses = widget.transactions.where((transaction) {
       return transaction.type == 'expense' &&
              transaction.dateTime.year == _selectedMonth.year &&
              transaction.dateTime.month == _selectedMonth.month;
     }).toList();
     
-    // Kategorilere göre topla
     for (Transaction transaction in monthlyExpenses) {
       if (categoryExpenses.containsKey(transaction.category)) {
         categoryExpenses[transaction.category] = 
@@ -55,23 +53,19 @@ class _CategoryScreenState extends State<CategoryScreen> {
     return categoryExpenses;
   }
 
-  // Seçili ay için kategorik gelirleri hesapla
   Map<String, double> _calculateCategoryIncomes() {
     Map<String, double> categoryIncomes = {};
     
-    // Tüm gelir kategorilerini 0 ile başlat
     for (String category in _incomeCategories) {
       categoryIncomes[category] = 0.0;
     }
     
-    // Seçili ay içindeki gelir işlemlerini filtrele
     List<Transaction> monthlyIncomes = widget.transactions.where((transaction) {
       return transaction.type == 'income' &&
              transaction.dateTime.year == _selectedMonth.year &&
              transaction.dateTime.month == _selectedMonth.month;
     }).toList();
     
-    // Kategorilere göre topla
     for (Transaction transaction in monthlyIncomes) {
       if (categoryIncomes.containsKey(transaction.category)) {
         categoryIncomes[transaction.category] = 
@@ -82,19 +76,16 @@ class _CategoryScreenState extends State<CategoryScreen> {
     return categoryIncomes;
   }
 
-  // Toplam gider hesapla
   double _calculateTotalExpenses() {
     Map<String, double> expenses = _calculateCategoryExpenses();
     return expenses.values.fold(0.0, (sum, amount) => sum + amount);
   }
 
-  // Toplam gelir hesapla
   double _calculateTotalIncomes() {
     Map<String, double> incomes = _calculateCategoryIncomes();
     return incomes.values.fold(0.0, (sum, amount) => sum + amount);
   }
 
-  // Ay değiştirme fonksiyonları
   void _previousMonth() {
     setState(() {
       _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month - 1);
@@ -107,8 +98,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     });
   }
 
-  // Kategori kartı oluştur
-  Widget _buildCategoryCard(String category, double amount, bool isExpense) {
+  Widget _buildCategoryCard(String category, double amount, bool isExpense, String currencySymbol) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -135,7 +125,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
             ),
           ),
           Text(
-            '${NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 0).format(amount)}TL',
+            NumberFormat.currency(
+              locale: 'tr_TR',
+              symbol: currencySymbol,
+              decimalDigits: 0,
+            ).format(amount),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -149,6 +143,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
     Map<String, double> categoryExpenses = _calculateCategoryExpenses();
     Map<String, double> categoryIncomes = _calculateCategoryIncomes();
     double totalExpenses = _calculateTotalExpenses();
@@ -174,7 +169,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
       ),
       body: Column(
         children: [
-          // Ay seçici
           Container(
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.symmetric(vertical: 12),
@@ -213,8 +207,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
               ],
             ),
           ),
-
-          // Toplam Kutusu - Tarih altında
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             padding: const EdgeInsets.all(16),
@@ -247,7 +239,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
                           ),
                         ),
                         Text(
-                          '${NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 0).format(totalIncomes)}TL',
+                          NumberFormat.currency(
+                            locale: 'tr_TR',
+                            symbol: currencyProvider.currencySymbol,
+                            decimalDigits: 0,
+                          ).format(totalIncomes),
                           style: TextStyle(
                             fontSize: 16,
                             color: AppColors.income,
@@ -267,7 +263,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
                           ),
                         ),
                         Text(
-                          '${NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 0).format(totalExpenses)}TL',
+                          NumberFormat.currency(
+                            locale: 'tr_TR',
+                            symbol: currencyProvider.currencySymbol,
+                            decimalDigits: 0,
+                          ).format(totalExpenses),
                           style: TextStyle(
                             fontSize: 16,
                             color: AppColors.expense,
@@ -287,7 +287,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
                           ),
                         ),
                         Text(
-                          '${NumberFormat.currency(locale: 'tr_TR', symbol: '', decimalDigits: 0).format(totalIncomes - totalExpenses)}TL',
+                          NumberFormat.currency(
+                            locale: 'tr_TR',
+                            symbol: currencyProvider.currencySymbol,
+                            decimalDigits: 0,
+                          ).format(totalIncomes - totalExpenses),
                           style: TextStyle(
                             fontSize: 16,
                             color: (totalIncomes - totalExpenses) >= 0 
@@ -303,53 +307,14 @@ class _CategoryScreenState extends State<CategoryScreen> {
               ],
             ),
           ),
-
           Expanded(
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  // Gider Bölümü
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Column(
                       children: [
-                        // Gider Başlığı
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: AppColors.expense,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.expense, width: 2),
-                          ),
-                          child: const Text(
-                            'GİDER',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        
-                        // Gider Kategorileri
-                        ...categoryExpenses.entries.map((entry) =>
-                            _buildCategoryCard(entry.key, entry.value, true)),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Gelir Bölümü
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Column(
-                      children: [
-                        // Gelir Başlığı
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -370,14 +335,41 @@ class _CategoryScreenState extends State<CategoryScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        
-                        // Gelir Kategorileri
                         ...categoryIncomes.entries.map((entry) =>
-                            _buildCategoryCard(entry.key, entry.value, false)),
+                            _buildCategoryCard(entry.key, entry.value, false, currencyProvider.currencySymbol)),
                       ],
                     ),
                   ),
-
+                  const SizedBox(height: 16),
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: AppColors.expense,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.expense, width: 2),
+                          ),
+                          child: const Text(
+                            'GİDER',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ...categoryExpenses.entries.map((entry) =>
+                            _buildCategoryCard(entry.key, entry.value, true, currencyProvider.currencySymbol)),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 32),
                 ],
               ),

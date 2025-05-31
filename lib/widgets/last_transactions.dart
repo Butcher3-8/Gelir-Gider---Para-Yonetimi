@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../models/transaction.dart';
 import '../constants/app_colors.dart';
+import '../providers/currency_provider.dart';
 
 class LastTransactions extends StatelessWidget {
   final List<Transaction> transactions;
@@ -17,6 +19,8 @@ class LastTransactions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
+
     if (transactions.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(16.0),
@@ -56,19 +60,19 @@ class LastTransactions extends StatelessWidget {
                   content: const Text('Bu işlemi silmek istediğinizden emin misiniz?'),
                   actions: <Widget>[
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(true),
+                      onPressed: () => Navigator.of(context).pop(false), // Changed to false for cancel
                       child: const Text(
-                            'İptal',
-                      style: TextStyle(color: Color.fromARGB(255, 0, 0, 0)), // Burayı istediğin renkle değiştirebilirsin
-                     ),
+                        'İptal',
+                        style: TextStyle(color: Colors.black),
                       ),
+                    ),
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(true),
                       child: const Text(
-                            'Sil',
-                      style: TextStyle(color: Color.fromARGB(255, 0, 0, 0)), // Burayı istediğin renkle değiştirebilirsin
-                     ),
+                        'Sil',
+                        style: TextStyle(color: Colors.black),
                       ),
+                    ),
                   ],
                 );
               },
@@ -106,9 +110,13 @@ class LastTransactions extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${tx.amount.toStringAsFixed(2)} ₺',
+                    NumberFormat.currency(
+                      locale: 'tr_TR',
+                      symbol: currencyProvider.currencySymbol,
+                      decimalDigits: 2,
+                    ).format(tx.amount),
                     style: TextStyle(
-                      color: tx.type == 'expense' ? const Color.fromARGB(255, 202, 32, 23) : AppColors.income,
+                      color: tx.type == 'expense' ? AppColors.expense : AppColors.income,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),

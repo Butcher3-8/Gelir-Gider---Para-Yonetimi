@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/transaction.dart';
 import '../constants/app_colors.dart';
+import '../providers/currency_provider.dart';
 
 class ExpensePopup extends StatefulWidget {
   final List<String> categories;
@@ -32,14 +34,12 @@ class _ExpensePopupState extends State<ExpensePopup> {
   void initState() {
     super.initState();
     
-    // Düzenleme modunda varsayılan değerleri ayarla
     if (widget.initialTransaction != null) {
       _selectedCategory = widget.initialTransaction!.category;
       _amountController = TextEditingController(text: widget.initialTransaction!.amount.toString());
       _descriptionController = TextEditingController(text: widget.initialTransaction!.description);
       _selectedDate = widget.initialTransaction!.dateTime;
     } else {
-      // Yeni ekleme modunda varsayılan değerleri ayarla
       _selectedCategory = widget.categories.first;
       _amountController = TextEditingController();
       _descriptionController = TextEditingController();
@@ -83,8 +83,10 @@ class _ExpensePopupState extends State<ExpensePopup> {
 
   @override
   Widget build(BuildContext context) {
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
+    
     return GestureDetector(
-      onTap: () {}, // Boş onTap ile popup dışına tıklamayı engelleme
+      onTap: () {},
       child: Container(
         color: Colors.black.withOpacity(0.5),
         child: Center(
@@ -168,7 +170,7 @@ class _ExpensePopupState extends State<ExpensePopup> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    suffixText: '₺',
+                    suffixText: currencyProvider.currencySymbol,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -237,7 +239,6 @@ class _ExpensePopupState extends State<ExpensePopup> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          // Form validasyonu
                           if (_amountController.text.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -271,9 +272,7 @@ class _ExpensePopupState extends State<ExpensePopup> {
                             return;
                           }
 
-                          // Formu gönder
                           if (widget.initialTransaction != null) {
-                            // Düzenleme modu, yeni bir transaction oluştur
                             final updatedTransaction = Transaction(
                               type: 'expense',
                               category: _selectedCategory,
@@ -283,7 +282,6 @@ class _ExpensePopupState extends State<ExpensePopup> {
                             );
                             widget.onSubmit(updatedTransaction);
                           } else {
-                            // Yeni ekleme modu
                             widget.onAdd(
                               _selectedCategory,
                               amount,
@@ -299,9 +297,9 @@ class _ExpensePopupState extends State<ExpensePopup> {
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
-                                child: Text(
-                          widget.initialTransaction != null ? 'Güncelle' : 'Ekle',
-                          style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255)), // <-- Sadece burası eklendi
+                        child: const Text(
+                          'Ekle',
+                          style: TextStyle(color: Colors.white),
                         ),
                       ),
                     ),

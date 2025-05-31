@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/transaction.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../models/transaction.dart';
 import '../constants/app_colors.dart';
+import '../providers/currency_provider.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
   final List<Transaction> transactions;
@@ -33,9 +35,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.light(
-              primary: AppColors.income, // Tarih seçici için ana renk
-              onPrimary: Colors.white, // Seçili tarih metni rengi
-              onSurface: Colors.black, // Takvim metni rengi
+              primary: AppColors.income,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
             ),
           ),
           child: child!,
@@ -51,6 +53,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
+    
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -68,7 +72,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       ),
       body: Column(
         children: [
-          // Tarih seçim kartı
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Card(
@@ -101,8 +104,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               ),
             ),
           ),
-          
-          // İşlemler listesi
           Expanded(
             child: filteredTransactions.isEmpty
               ? Center(
@@ -178,7 +179,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           ],
                         ),
                         trailing: Text(
-                          "${tx.type == 'income' ? '+' : '-'}${NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 2).format(tx.amount)}",
+                          "${tx.type == 'income' ? '+' : '-'}${NumberFormat.currency(locale: 'tr_TR', symbol: currencyProvider.currencySymbol, decimalDigits: 2).format(tx.amount)}",
                           style: TextStyle(
                             color: tx.type == 'income'
                                 ? AppColors.income

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/transaction.dart';
 import '../constants/app_colors.dart';
+import '../providers/currency_provider.dart';
 
 class IncomePopup extends StatefulWidget {
   final List<String> categories;
@@ -81,6 +83,8 @@ class _IncomePopupState extends State<IncomePopup> {
 
   @override
   Widget build(BuildContext context) {
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
+    
     return GestureDetector(
       onTap: () {},
       child: Container(
@@ -166,7 +170,7 @@ class _IncomePopupState extends State<IncomePopup> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    suffixText: '₺',
+                    suffixText: currencyProvider.currencySymbol,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -293,9 +297,9 @@ class _IncomePopupState extends State<IncomePopup> {
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
-                        child: Text(
-                          widget.initialTransaction != null ? 'Güncelle' : 'Ekle',
-                          style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255)), // <-- Sadece burası eklendi
+                        child: const Text(
+                          'Ekle',
+                          style: TextStyle(color: Colors.white),
                         ),
                       ),
                     ),

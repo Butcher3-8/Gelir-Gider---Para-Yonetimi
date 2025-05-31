@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/screens/transaction_history_screen.dart';
-import 'package:flutter_app/screens/category_screen.dart'; // Eklenen import
+import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -10,6 +9,9 @@ import '../widgets/expense_popup.dart';
 import '../widgets/income_popup.dart';
 import '../widgets/last_transactions.dart';
 import '../models/transaction.dart';
+import '../screens/transaction_history_screen.dart';
+import '../screens/category_screen.dart';
+import '../providers/currency_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -33,7 +35,6 @@ class _HomeScreenState extends State<HomeScreen> {
   late Box<Transaction> _transactionBox;
   List<Transaction> _transactions = [];
   
-  // Takvim olayları için Map
   late Map<DateTime, List<Transaction>> _events;
   
   @override
@@ -44,13 +45,11 @@ class _HomeScreenState extends State<HomeScreen> {
     _openBox();
   }
 
-  // Hive box'ını aç ve verileri yükle
   Future<void> _openBox() async {
     _transactionBox = await Hive.openBox<Transaction>('transactions');
     _loadTransactions();
   }
 
-  // Verileri Hive'dan yükle
   void _loadTransactions() {
     setState(() {
       _transactions = _transactionBox.values.toList();
@@ -58,13 +57,11 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // Yeni işlem kaydet
   Future<void> _saveTransaction(Transaction transaction) async {
     await _transactionBox.add(transaction);
     _loadTransactions();
   }
 
-  // İşlem güncelle
   Future<void> _updateTransactionInBox(Transaction oldTransaction, Transaction newTransaction) async {
     final index = _transactionBox.values.toList().indexOf(oldTransaction);
     if (index != -1) {
@@ -73,7 +70,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // İşlem sil
   Future<void> _deleteTransactionFromBox(Transaction transaction) async {
     final index = _transactionBox.values.toList().indexOf(transaction);
     if (index != -1) {
@@ -102,11 +98,9 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // İşlem silme fonksiyonu
   void _deleteTransaction(Transaction transaction) {
     _deleteTransactionFromBox(transaction);
     
-    // Silme işlemi başarılı bildirimi
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('İşlem silindi'),
@@ -122,13 +116,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // İşlem düzenleme fonksiyonu
   void _editTransaction(Transaction transaction) {
     setState(() {
       _isEditMode = true;
       _transactionToEdit = transaction;
       
-      // İşlem tipine göre uygun popup'ı göster
       if (transaction.type == 'expense') {
         _isExpensePopupVisible = true;
       } else {
@@ -137,7 +129,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // Düzenlenen işlemi güncelleme fonksiyonu
   void _updateTransaction(Transaction updatedTransaction) {
     _updateTransactionInBox(_transactionToEdit, updatedTransaction);
     setState(() {
@@ -145,7 +136,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // Toplam bakiye hesaplama fonksiyonu
   double _calculateBalance() {
     double income = _transactions
         .where((t) => t.type == 'income')
@@ -158,11 +148,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return income - expense;
   }
   
-  // Tarihe göre olayları grupla
   void _updateEvents() {
     _events = {};
     for (var transaction in _transactions) {
-      // Sadece yıl, ay ve gün ile DateTime oluştur
       final eventDate = DateTime(
         transaction.dateTime.year,
         transaction.dateTime.month,
@@ -177,13 +165,11 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
   
-  // Belirli bir tarih için olaylar listesini getir
   List<Transaction> _getEventsForDay(DateTime day) {
     final normalizedDay = DateTime(day.year, day.month, day.day);
     return _events[normalizedDay] ?? [];
   }
   
-  // Belirli bir tarih için gelir/gider işareti göster
   Widget _buildMarkers(DateTime day, List<Transaction> events) {
     if (events.isEmpty) return Container();
     
@@ -222,14 +208,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    // Box'ı kapat
     Hive.box<Transaction>('transactions').close();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Olay listesini güncelle
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
     _updateEvents();
     
     return Scaffold(
@@ -251,7 +236,6 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.category),
             onPressed: () {
-              // Category screen'e yönlendirme eklendi
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -266,7 +250,6 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Column(
             children: [
-              // Bakiye özet kartı
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Card(
@@ -299,7 +282,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          '${NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 2).format(_calculateBalance())}',
+                          NumberFormat.currency(
+                            locale: 'tr_TR',
+                            symbol: currencyProvider.currencySymbol,
+                            decimalDigits: 2,
+                          ).format(_calculateBalance()),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 28,
@@ -311,7 +298,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              // Takvim kartı
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Card(
@@ -367,7 +353,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              // Son işlemler başlığı
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -405,7 +390,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              // Son işlemler listesi
               Expanded(
                 child: _transactions.isEmpty
                     ? const Center(
@@ -439,7 +423,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
               ),
-              // Alt tuşlar çubuğu - Gelir ve Gider Ekle
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -565,13 +548,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          // Popup'lar
           if (_isExpensePopupVisible)
             ExpensePopup(
               categories: ['Yiyecek', 'Ulaşım', 'Fatura', 'Alışveriş', 'Verilen Borç','Eğlence', 'Diğer'],
               onAdd: (category, amount, description, time) {
                 if (_isEditMode) {
-                  // Düzenleme modu
                   Transaction updatedTx = Transaction(
                     type: 'expense',
                     category: category,
@@ -581,7 +562,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                   _updateTransaction(updatedTx);
                 } else {
-                  // Yeni ekleme modu
                   Transaction newTx = Transaction(
                     type: 'expense',
                     category: category,
@@ -619,7 +599,6 @@ class _HomeScreenState extends State<HomeScreen> {
               categories: ['Maaş', 'Burs', 'Harçlık', 'Ek Gelir', 'Alınan Borç', 'Diğer'],
               onAdd: (category, amount, description, time) {
                 if (_isEditMode) {
-                  // Düzenleme modu
                   Transaction updatedTx = Transaction(
                     type: 'income',
                     category: category,
@@ -629,7 +608,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                   _updateTransaction(updatedTx);
                 } else {
-                  // Yeni ekleme modu
                   Transaction newTx = Transaction(
                     type: 'income',
                     category: category,
