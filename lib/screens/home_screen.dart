@@ -34,9 +34,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   late Box<Transaction> _transactionBox;
   List<Transaction> _transactions = [];
-  
+
   late Map<DateTime, List<Transaction>> _events;
-  
+
   @override
   void initState() {
     super.initState();
@@ -100,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _deleteTransaction(Transaction transaction) {
     _deleteTransactionFromBox(transaction);
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('İşlem silindi'),
@@ -120,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _isEditMode = true;
       _transactionToEdit = transaction;
-      
+
       if (transaction.type == 'expense') {
         _isExpensePopupVisible = true;
       } else {
@@ -140,14 +140,14 @@ class _HomeScreenState extends State<HomeScreen> {
     double income = _transactions
         .where((t) => t.type == 'income')
         .fold(0, (sum, item) => sum + item.amount);
-    
+
     double expense = _transactions
         .where((t) => t.type == 'expense')
         .fold(0, (sum, item) => sum + item.amount);
-    
+
     return income - expense;
   }
-  
+
   void _updateEvents() {
     _events = {};
     for (var transaction in _transactions) {
@@ -156,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
         transaction.dateTime.month,
         transaction.dateTime.day,
       );
-      
+
       if (_events[eventDate] != null) {
         _events[eventDate]!.add(transaction);
       } else {
@@ -164,18 +164,18 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
   }
-  
+
   List<Transaction> _getEventsForDay(DateTime day) {
     final normalizedDay = DateTime(day.year, day.month, day.day);
     return _events[normalizedDay] ?? [];
   }
-  
+
   Widget _buildMarkers(DateTime day, List<Transaction> events) {
     if (events.isEmpty) return Container();
-    
+
     bool hasIncome = events.any((tx) => tx.type == 'income');
     bool hasExpense = events.any((tx) => tx.type == 'expense');
-    
+
     return Positioned(
       bottom: 1,
       child: Row(
@@ -216,20 +216,17 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final currencyProvider = Provider.of<CurrencyProvider>(context);
     _updateEvents();
-    
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       drawer: const CustomDrawer(),
       appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-        title: const Text(
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        elevation: Theme.of(context).appBarTheme.elevation,
+        iconTheme: Theme.of(context).appBarTheme.iconTheme,
+        title: Text(
           'Gelir Gider Yönetimi',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
         centerTitle: true,
         actions: [
@@ -253,10 +250,8 @@ class _HomeScreenState extends State<HomeScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Card(
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+                  elevation: Theme.of(context).cardTheme.elevation,
+                  shape: Theme.of(context).cardTheme.shape,
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -273,12 +268,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Toplam Bakiyeniz',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                                color: Colors.white,
+                              ),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -287,11 +281,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             symbol: currencyProvider.currencySymbol,
                             decimalDigits: 2,
                           ).format(_calculateBalance()),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                                color: Colors.white,
+                              ),
                         ),
                       ],
                     ),
@@ -301,10 +293,8 @@ class _HomeScreenState extends State<HomeScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+                  elevation: Theme.of(context).cardTheme.elevation,
+                  shape: Theme.of(context).cardTheme.shape,
                   child: Padding(
                     padding: const EdgeInsets.all(8),
                     child: TableCalendar(
@@ -331,15 +321,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         weekendTextStyle: const TextStyle(color: Colors.red),
                         outsideDaysVisible: false,
                       ),
-                      headerStyle: const HeaderStyle(
+                      headerStyle: HeaderStyle(
                         formatButtonVisible: false,
                         titleCentered: true,
-                        titleTextStyle: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                        leftChevronIcon: Icon(Icons.chevron_left, color: Colors.black54),
-                        rightChevronIcon: Icon(Icons.chevron_right, color: Colors.black54),
+                        titleTextStyle: Theme.of(context).textTheme.titleMedium!,
+                        leftChevronIcon: Icon(Icons.chevron_left, color: Theme.of(context).iconTheme.color),
+                        rightChevronIcon: Icon(Icons.chevron_right, color: Theme.of(context).iconTheme.color),
                       ),
                       eventLoader: _getEventsForDay,
                       calendarBuilders: CalendarBuilders(
@@ -358,12 +345,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Son İşlemler',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
                     TextButton(
                       onPressed: () {
@@ -374,16 +358,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         );
                       },
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                      ),
-                      child: const Text(
+                      style: Theme.of(context).textButtonTheme.style,
+                      child: Text(
                         "Daha Fazla",
-                        style: TextStyle(
-                          color: Colors.black54,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                              color: Theme.of(context).textTheme.bodyMedium!.color,
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                     ),
                   ],
@@ -392,22 +373,19 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 8),
               Expanded(
                 child: _transactions.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
                               Icons.account_balance_wallet_outlined,
                               size: 64,
-                              color: Colors.black26,
+                              color: Theme.of(context).textTheme.bodyMedium!.color,
                             ),
-                            SizedBox(height: 16),
+                            const SizedBox(height: 16),
                             Text(
                               'Henüz bir işlem yok',
-                              style: TextStyle(
-                                color: Colors.black54,
-                                fontSize: 16,
-                              ),
+                              style: Theme.of(context).textTheme.bodyLarge,
                             ),
                           ],
                         ),
@@ -425,7 +403,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardTheme.color,
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.05),
@@ -550,7 +528,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           if (_isExpensePopupVisible)
             ExpensePopup(
-              categories: ['Yiyecek', 'Ulaşım', 'Fatura', 'Alışveriş', 'Verilen Borç','Eğlence', 'Diğer'],
+              categories: ['Yiyecek', 'Ulaşım', 'Fatura', 'Alışveriş', 'Verilen Borç', 'Eğlence', 'Diğer'],
               onAdd: (category, amount, description, time) {
                 if (_isEditMode) {
                   Transaction updatedTx = Transaction(

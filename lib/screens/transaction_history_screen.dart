@@ -33,22 +33,30 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.income,
-              onPrimary: Colors.white,
-              onSurface: Colors.black87,
-            ),
-            dialogBackgroundColor: Colors.white,
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.income,
-                textStyle: const TextStyle(fontWeight: FontWeight.bold),
-              ),
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+                  primary: AppColors.income,
+                  onPrimary: Colors.white,
+                  onSurface: Theme.of(context).textTheme.bodyLarge!.color!,
+                ),
+            dialogBackgroundColor: Theme.of(context).cardTheme.color,
+            textButtonTheme: Theme.of(context).textButtonTheme,
+            datePickerTheme: DatePickerThemeData(
+              backgroundColor: Theme.of(context).cardTheme.color,
+              headerBackgroundColor: AppColors.income,
+              headerForegroundColor: Colors.white,
+              surfaceTintColor: Colors.transparent,
+              dayStyle: Theme.of(context).textTheme.bodyMedium,
+              yearStyle: Theme.of(context).textTheme.bodyMedium,
+              weekdayStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).textTheme.bodyMedium!.color,
+                  ),
+              todayBorder: BorderSide(color: AppColors.income, width: 1),
+              rangeSelectionBackgroundColor: AppColors.income.withOpacity(0.2),
             ),
           ),
           child: MediaQuery(
             data: MediaQuery.of(context).copyWith(
-              textScaleFactor: 1.0, // Consistent text size on mobile
+              textScaleFactor: 1.0,
             ),
             child: child!,
           ),
@@ -78,25 +86,22 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     final currencyProvider = Provider.of<CurrencyProvider>(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.income,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        elevation: Theme.of(context).appBarTheme.elevation,
+        iconTheme: Theme.of(context).appBarTheme.iconTheme,
+        title: Text(
           'Geçmiş İşlemler',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-            shadows: [
-              Shadow(
-                blurRadius: 4,
-                color: Colors.black26,
-                offset: Offset(1, 1),
+          style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
+                shadows: [
+                  Shadow(
+                    blurRadius: 4,
+                    color: Colors.black.withOpacity(0.26),
+                    offset: const Offset(1, 1),
+                  ),
+                ],
               ),
-            ],
-          ),
         ),
         centerTitle: true,
       ),
@@ -105,15 +110,13 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+              elevation: Theme.of(context).cardTheme.elevation,
+              shape: Theme.of(context).cardTheme.shape,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardTheme.color,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey[300]!, width: 1),
+                  border: Border.all(color: Theme.of(context).dividerTheme.color!, width: 1),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.1),
@@ -128,7 +131,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back_ios, size: 20, color: AppColors.income),
+                        icon: Icon(Icons.arrow_back_ios, size: 20, color: AppColors.income),
                         onPressed: () => _changeDate(false),
                         splashRadius: 24,
                       ),
@@ -141,11 +144,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                               DateFormat('dd MMMM yyyy', 'tr_TR').format(selectedDate),
                               key: ValueKey(selectedDate),
                               textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
+                              style: Theme.of(context).textTheme.titleMedium,
                             ),
                           ),
                         ),
@@ -156,10 +155,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           size: 20,
                           color: selectedDate.isBefore(DateTime.now())
                               ? AppColors.income
-                              : Colors.grey[400],
+                              : Theme.of(context).disabledColor,
                         ),
-                        onPressed:
-                            selectedDate.isBefore(DateTime.now()) ? () => _changeDate(true) : null,
+                        onPressed: selectedDate.isBefore(DateTime.now()) ? () => _changeDate(true) : null,
                         splashRadius: 24,
                       ),
                     ],
@@ -175,7 +173,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       margin: const EdgeInsets.symmetric(horizontal: 24),
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).cardTheme.color,
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
@@ -191,24 +189,17 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           Icon(
                             Icons.history_toggle_off,
                             size: 80,
-                            color: Colors.grey[300],
+                            color: Theme.of(context).textTheme.bodyMedium!.color,
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'Bu tarihte işlem yok',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey[600],
-                            ),
+                            style: Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Yeni bir gelir veya gider eklemeyi deneyin!',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[500],
-                            ),
+                            style: Theme.of(context).textTheme.bodyMedium,
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -225,13 +216,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                         duration: const Duration(milliseconds: 300),
                         child: Card(
                           margin: const EdgeInsets.symmetric(vertical: 6),
-                          elevation: 3,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          elevation: Theme.of(context).cardTheme.elevation,
+                          shape: Theme.of(context).cardTheme.shape,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Theme.of(context).cardTheme.color,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: tx.type == 'income'
@@ -241,8 +230,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                               ),
                             ),
                             child: ListTile(
-                              contentPadding:
-                                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               leading: Container(
                                 width: 48,
                                 height: 48,
@@ -265,11 +253,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                               ),
                               title: Text(
                                 tx.category,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: Colors.black87,
-                                ),
+                                style: Theme.of(context).textTheme.titleMedium,
                               ),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,40 +261,33 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                   const SizedBox(height: 4),
                                   Text(
                                     tx.description.isNotEmpty ? tx.description : 'Açıklama yok',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey[600],
-                                    ),
+                                    style: Theme.of(context).textTheme.bodyMedium,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     DateFormat('HH:mm', 'tr_TR').format(tx.dateTime),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[500],
-                                    ),
+                                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                                          fontSize: 12,
+                                        ),
                                   ),
                                 ],
                               ),
                               trailing: Text(
                                 "${tx.type == 'income' ? '+' : '-'}${NumberFormat.currency(locale: 'tr_TR', symbol: currencyProvider.currencySymbol, decimalDigits: 2).format(tx.amount)}",
-                                style: TextStyle(
-                                  color:
-                                      tx.type == 'income' ? AppColors.income : AppColors.expense,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                  shadows: [
-                                    Shadow(
-                                      blurRadius: 2,
-                                      color: tx.type == 'income'
-                                          ? AppColors.income.withOpacity(0.3)
-                                          : AppColors.expense.withOpacity(0.3),
-                                      offset: const Offset(1, 1),
+                                style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                                      color: tx.type == 'income' ? AppColors.income : AppColors.expense,
+                                      shadows: [
+                                        Shadow(
+                                          blurRadius: 2,
+                                          color: tx.type == 'income'
+                                              ? AppColors.income.withOpacity(0.3)
+                                              : AppColors.expense.withOpacity(0.3),
+                                          offset: const Offset(1, 1),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
                               ),
                             ),
                           ),
@@ -320,12 +297,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   ),
           ),
           if (filteredTransactions.isNotEmpty)
-            const Divider(
+            Divider(
               height: 1,
-              thickness: 1,
-              color: Colors.grey,
-              indent: 16,
-              endIndent: 16,
+              thickness: Theme.of(context).dividerTheme.thickness,
+              color: Theme.of(context).dividerTheme.color,
+              indent: Theme.of(context).dividerTheme.indent,
+              endIndent: Theme.of(context).dividerTheme.endIndent,
             ),
         ],
       ),

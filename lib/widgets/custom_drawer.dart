@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/currency_provider.dart';
+import '../providers/theme_provider.dart';
 
-class CustomDrawer extends StatefulWidget {
+class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
 
-  @override
-  State<CustomDrawer> createState() => _CustomDrawerState();
-}
-
-class _CustomDrawerState extends State<CustomDrawer> {
-  bool isDarkMode = false;
-  final List<String> languages = [
+  final List<String> languages = const [
     'Türkçe',
     'İngilizce',
     'Almanca',
@@ -19,7 +14,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
     'İspanyolca',
   ];
 
-  final List<String> currencies = [
+  final List<String> currencies = const [
     'TL',
     'Dolar',
     'Euro',
@@ -28,14 +23,15 @@ class _CustomDrawerState extends State<CustomDrawer> {
   @override
   Widget build(BuildContext context) {
     final currencyProvider = Provider.of<CurrencyProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Drawer(
       child: Container(
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             colors: [
-              Color(0xFFF5F5F5),
-              Color(0xFFE0E0E0),
+              themeProvider.isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFF5F5F5),
+              themeProvider.isDarkMode ? const Color(0xFF1E1E1E) : const Color(0xFFE0E0E0),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -90,43 +86,37 @@ class _CustomDrawerState extends State<CustomDrawer> {
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               leading: Icon(
                 Icons.brightness_6,
-                color: Colors.grey[800],
+                color: Theme.of(context).iconTheme.color,
                 size: 28,
               ),
-              title: const Text(
+              title: Text(
                 'Uygulama Teması',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
+                style: Theme.of(context).textTheme.titleMedium,
               ),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    isDarkMode ? Icons.nightlight_round : Icons.wb_sunny,
-                    color: isDarkMode ? Colors.amber[600] : Colors.orangeAccent,
+                    themeProvider.isDarkMode ? Icons.nightlight_round : Icons.wb_sunny,
+                    color: themeProvider.isDarkMode ? Colors.amber[600] : Colors.orangeAccent,
                     size: 24,
                   ),
                   const SizedBox(width: 8),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
                     child: Switch(
-                      key: ValueKey<bool>(isDarkMode),
-                      value: isDarkMode,
+                      key: ValueKey<bool>(themeProvider.isDarkMode),
+                      value: themeProvider.isDarkMode,
                       activeColor: Colors.amber[600],
                       inactiveThumbColor: Colors.grey[400],
                       onChanged: (value) {
-                        setState(() {
-                          isDarkMode = value;
-                        });
+                        themeProvider.toggleTheme();
                       },
                     ),
                   ),
                 ],
               ),
-              hoverColor: Colors.grey[200],
+              hoverColor: themeProvider.isDarkMode ? Colors.grey[700] : Colors.grey[200],
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -140,19 +130,15 @@ class _CustomDrawerState extends State<CustomDrawer> {
             ExpansionTile(
               leading: Icon(
                 Icons.monetization_on,
-                color: Colors.grey[800],
+                color: Theme.of(context).iconTheme.color,
                 size: 28,
               ),
               title: Text(
                 'Para Birimi: ${currencyProvider.selectedCurrency}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
+                style: Theme.of(context).textTheme.titleMedium,
               ),
-              iconColor: Colors.grey[800],
-              collapsedIconColor: Colors.grey[600],
+              iconColor: Theme.of(context).iconTheme.color,
+              collapsedIconColor: themeProvider.isDarkMode ? Colors.grey[400] : Colors.grey[600],
               childrenPadding: const EdgeInsets.only(left: 16),
               children: currencies.map((currency) {
                 return ListTile(
@@ -161,15 +147,19 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     currency,
                     style: TextStyle(
                       fontSize: 14,
-                      color: currencyProvider.selectedCurrency == currency ? Colors.blue[700] : Colors.black87,
-                      fontWeight: currencyProvider.selectedCurrency == currency ? FontWeight.w600 : FontWeight.normal,
+                      color: currencyProvider.selectedCurrency == currency
+                          ? Colors.blue[700]
+                          : Theme.of(context).textTheme.bodyLarge!.color,
+                      fontWeight: currencyProvider.selectedCurrency == currency
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
                   ),
                   onTap: () {
                     currencyProvider.setCurrency(currency);
                     Navigator.pop(context);
                   },
-                  hoverColor: Colors.grey[200],
+                  hoverColor: themeProvider.isDarkMode ? Colors.grey[700] : Colors.grey[200],
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -180,18 +170,14 @@ class _CustomDrawerState extends State<CustomDrawer> {
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               leading: Icon(
                 Icons.contact_mail,
-                color: Colors.grey[800],
+                color: Theme.of(context).iconTheme.color,
                 size: 28,
               ),
-              title: const Text(
+              title: Text(
                 'İletişim',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
+                style: Theme.of(context).textTheme.titleMedium,
               ),
-              hoverColor: Colors.grey[200],
+              hoverColor: themeProvider.isDarkMode ? Colors.grey[700] : Colors.grey[200],
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),

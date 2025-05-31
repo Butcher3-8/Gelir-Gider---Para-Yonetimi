@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/providers/currency_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction.dart';
@@ -20,59 +19,59 @@ class CategoryScreen extends StatefulWidget {
 
 class _CategoryScreenState extends State<CategoryScreen> {
   DateTime _selectedMonth = DateTime.now();
-  
+
   final List<String> _expenseCategories = [
     'Yiyecek', 'Ulaşım', 'Fatura', 'Alışveriş', 
     'Verilen Borç', 'Eğlence', 'Diğer'
   ];
-  
+
   final List<String> _incomeCategories = [
     'Maaş', 'Burs', 'Harçlık', 'Ek Gelir', 'Alınan Borç', 'Diğer'
   ];
 
   Map<String, double> _calculateCategoryExpenses() {
     Map<String, double> categoryExpenses = {};
-    
+
     for (String category in _expenseCategories) {
       categoryExpenses[category] = 0.0;
     }
-    
+
     List<Transaction> monthlyExpenses = widget.transactions.where((transaction) {
       return transaction.type == 'expense' &&
              transaction.dateTime.year == _selectedMonth.year &&
              transaction.dateTime.month == _selectedMonth.month;
     }).toList();
-    
+
     for (Transaction transaction in monthlyExpenses) {
       if (categoryExpenses.containsKey(transaction.category)) {
         categoryExpenses[transaction.category] = 
             categoryExpenses[transaction.category]! + transaction.amount;
       }
     }
-    
+
     return categoryExpenses;
   }
 
   Map<String, double> _calculateCategoryIncomes() {
     Map<String, double> categoryIncomes = {};
-    
+
     for (String category in _incomeCategories) {
       categoryIncomes[category] = 0.0;
     }
-    
+
     List<Transaction> monthlyIncomes = widget.transactions.where((transaction) {
       return transaction.type == 'income' &&
              transaction.dateTime.year == _selectedMonth.year &&
              transaction.dateTime.month == _selectedMonth.month;
     }).toList();
-    
+
     for (Transaction transaction in monthlyIncomes) {
       if (categoryIncomes.containsKey(transaction.category)) {
         categoryIncomes[transaction.category] = 
             categoryIncomes[transaction.category]! + transaction.amount;
       }
     }
-    
+
     return categoryIncomes;
   }
 
@@ -103,7 +102,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
@@ -119,10 +118,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         children: [
           Text(
             '$category :',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
+            style: Theme.of(context).textTheme.titleMedium,
           ),
           Text(
             NumberFormat.currency(
@@ -130,11 +126,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
               symbol: currencySymbol,
               decimalDigits: 0,
             ).format(amount),
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: isExpense ? AppColors.expense : AppColors.income,
-            ),
+            style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                  color: isExpense ? AppColors.expense : AppColors.income,
+                ),
           ),
         ],
       ),
@@ -150,20 +144,17 @@ class _CategoryScreenState extends State<CategoryScreen> {
     double totalIncomes = _calculateTotalIncomes();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        elevation: Theme.of(context).appBarTheme.elevation,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).appBarTheme.iconTheme!.color),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Kategori Raporu',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
         centerTitle: true,
       ),
@@ -173,7 +164,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardTheme.color,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
@@ -194,10 +185,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 const SizedBox(width: 20),
                 Text(
                   DateFormat('MMMM yyyy', 'tr_TR').format(_selectedMonth).toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(width: 20),
                 IconButton(
@@ -211,9 +199,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardTheme.color,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.black87, width: 3),
+              border: Border.all(color: Theme.of(context).textTheme.bodyLarge!.color!, width: 3),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.1),
@@ -232,11 +220,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       children: [
                         Text(
                           'Toplam Gelir',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.income,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                                color: AppColors.income,
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                         Text(
                           NumberFormat.currency(
@@ -244,11 +231,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
                             symbol: currencyProvider.currencySymbol,
                             decimalDigits: 0,
                           ).format(totalIncomes),
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: AppColors.income,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                                color: AppColors.income,
+                              ),
                         ),
                       ],
                     ),
@@ -256,11 +241,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       children: [
                         Text(
                           'Toplam Gider',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.expense,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                                color: AppColors.expense,
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                         Text(
                           NumberFormat.currency(
@@ -268,23 +252,19 @@ class _CategoryScreenState extends State<CategoryScreen> {
                             symbol: currencyProvider.currencySymbol,
                             decimalDigits: 0,
                           ).format(totalExpenses),
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: AppColors.expense,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                                color: AppColors.expense,
+                              ),
                         ),
                       ],
                     ),
                     Column(
                       children: [
-                        const Text(
+                        Text(
                           'Net',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                         Text(
                           NumberFormat.currency(
@@ -292,13 +272,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
                             symbol: currencyProvider.currencySymbol,
                             decimalDigits: 0,
                           ).format(totalIncomes - totalExpenses),
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: (totalIncomes - totalExpenses) >= 0 
-                                ? AppColors.income 
-                                : AppColors.expense,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                                color: (totalIncomes - totalExpenses) >= 0 
+                                    ? AppColors.income 
+                                    : AppColors.expense,
+                              ),
                         ),
                       ],
                     ),
