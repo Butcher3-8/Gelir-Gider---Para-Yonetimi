@@ -33,17 +33,14 @@ class _ExpensePopupState extends State<ExpensePopup> {
   @override
   void initState() {
     super.initState();
-
-    if (widget.initialTransaction != null) {
-      _selectedCategory = widget.initialTransaction!.category;
-      _amountController = TextEditingController(text: widget.initialTransaction!.amount.toString());
-      _descriptionController = TextEditingController(text: widget.initialTransaction!.description);
-      _selectedDate = widget.initialTransaction!.dateTime;
-    } else {
-      _selectedCategory = widget.categories.first;
-      _amountController = TextEditingController();
-      _descriptionController = TextEditingController();
-    }
+    _selectedCategory = widget.initialTransaction?.category ?? widget.categories.first;
+    _amountController = TextEditingController(
+      text: widget.initialTransaction?.amount.toString() ?? '',
+    );
+    _descriptionController = TextEditingController(
+      text: widget.initialTransaction?.description ?? '',
+    );
+    _selectedDate = widget.initialTransaction?.dateTime ?? DateTime.now();
   }
 
   @override
@@ -53,8 +50,8 @@ class _ExpensePopupState extends State<ExpensePopup> {
     super.dispose();
   }
 
-  void _selectDate() async {
-    final DateTime? pickedDate = await showDatePicker(
+  Future<void> _selectDate() async {
+    final pickedDate = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2000),
@@ -65,9 +62,9 @@ class _ExpensePopupState extends State<ExpensePopup> {
             colorScheme: Theme.of(context).colorScheme.copyWith(
                   primary: AppColors.expense,
                   onPrimary: Colors.white,
-                  onSurface: Theme.of(context).textTheme.bodyLarge!.color!,
+                  onSurface: Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
                 ),
-            dialogBackgroundColor: Theme.of(context).cardTheme.color,
+            dialogBackgroundColor: Theme.of(context).cardColor,
           ),
           child: child!,
         );
@@ -75,7 +72,7 @@ class _ExpensePopupState extends State<ExpensePopup> {
     );
 
     if (pickedDate != null) {
-      final TimeOfDay? pickedTime = await showTimePicker(
+      final pickedTime = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(_selectedDate),
       );
@@ -94,39 +91,75 @@ class _ExpensePopupState extends State<ExpensePopup> {
     }
   }
 
+  void _handleSubmit() {
+    if (_amountController.text.isEmpty) {
+      _showSnackBar('Lütfen bir tutar girin');
+      return;
+    }
+
+    double? amount = double.tryParse(_amountController.text.replaceAll(',', '.'));
+    if (amount == null) {
+      _showSnackBar('Geçerli bir tutar girin');
+      return;
+    }
+
+    if (amount <= 0) {
+      _showSnackBar('Tutar 0\'dan büyük olmalıdır');
+      return;
+    }
+
+    if (widget.initialTransaction != null) {
+      final updatedTransaction = Transaction(
+        type: 'expense',
+        category: _selectedCategory,
+        amount: amount,
+        description: _descriptionController.text,
+        dateTime: _selectedDate,
+      );
+      widget.onSubmit(updatedTransaction);
+    } else {
+      widget.onAdd(
+        _selectedCategory,
+        amount,
+        _descriptionController.text,
+        _selectedDate,
+      );
+    }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final currencyProvider = Provider.of<CurrencyProvider>(context);
+    final currencyProvider = Provider.of<CurrencyProvider>(context, listen: false);
 
-    return GestureDetector(
-      onTap: () {},
-      child: Container(
-        color: Colors.black.withOpacity(0.5),
+    return Scaffold(
+      backgroundColor: Colors.black.withOpacity(0.5),
+      resizeToAvoidBottomInset: true,
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
         child: Center(
           child: Container(
-            width: MediaQuery.of(context).size.width * 0.85,
-            margin: const EdgeInsets.only(bottom: 16), // Ensure bottom margin for keyboard
-            child: SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.85, // Limit height to 85% of screen
-                ),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardTheme.color,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+            width: MediaQuery.of(context).size.width * 0.9,
+            margin: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 16,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+            ),
+            child: Material(
+              borderRadius: BorderRadius.circular(16),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Icon(
-                            Icons.remove_circle_outline,
-                            color: AppColors.expense,
-                          ),
+                          Icon(Icons.remove_circle_outline, color: AppColors.expense),
                           const SizedBox(width: 8),
                           Text(
                             widget.initialTransaction != null ? 'Gider Düzenle' : 'Gider Ekle',
@@ -136,99 +169,67 @@ class _ExpensePopupState extends State<ExpensePopup> {
                           ),
                           const Spacer(),
                           IconButton(
-                            icon: Icon(Icons.close, color: Theme.of(context).iconTheme.color),
+                            icon: const Icon(Icons.close),
                             onPressed: widget.onCancel,
                           ),
                         ],
                       ),
                       const SizedBox(height: 16),
-                      Text(
-                        'Kategori',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Theme.of(context).dividerTheme.color!),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: DropdownButton<String>(
-                          value: _selectedCategory,
-                          isExpanded: true,
-                          underline: const SizedBox(),
-                          items: widget.categories.map((category) {
-                            return DropdownMenuItem<String>(
-                              value: category,
-                              child: Text(category, style: Theme.of(context).textTheme.bodyLarge),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedCategory = value!;
-                            });
-                          },
-                        ),
-                      ),
+
+                      // Kategori
+                      _buildLabel('Kategori'),
+                      _buildDropdown(),
+
                       const SizedBox(height: 16),
-                      Text(
-                        'Tutar',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
+
+                      // Tutar
+                      _buildLabel('Tutar'),
                       TextField(
                         controller: _amountController,
-                        keyboardType: TextInputType.number,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         decoration: InputDecoration(
                           hintText: '0.00',
-                          border: Theme.of(context).inputDecorationTheme.border,
-                          enabledBorder: Theme.of(context).inputDecorationTheme.enabledBorder,
-                          focusedBorder: Theme.of(context).inputDecorationTheme.focusedBorder,
                           suffixText: currencyProvider.currencySymbol,
                         ),
                       ),
+
                       const SizedBox(height: 16),
-                      Text(
-                        'Açıklama',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
+
+                      // Açıklama
+                      _buildLabel('Açıklama'),
                       TextField(
                         controller: _descriptionController,
-                        decoration: InputDecoration(
-                          hintText: 'Açıklama girin',
-                          border: Theme.of(context).inputDecorationTheme.border,
-                          enabledBorder: Theme.of(context).inputDecorationTheme.enabledBorder,
-                          focusedBorder: Theme.of(context).inputDecorationTheme.focusedBorder,
-                        ),
+                        decoration: const InputDecoration(hintText: 'Açıklama girin'),
                       ),
+
                       const SizedBox(height: 16),
-                      Text(
-                        'Tarih',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
+
+                      // Tarih
+                      _buildLabel('Tarih'),
                       InkWell(
                         onTap: _selectDate,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Theme.of(context).dividerTheme.color!),
+                            border: Border.all(color: Theme.of(context).dividerColor),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             children: [
                               Text(
-                                "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year} - ${_selectedDate.hour.toString().padLeft(2, '0')}:${_selectedDate.minute.toString().padLeft(2, '0')}",
-                                style: Theme.of(context).textTheme.bodyLarge,
+                                "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year} "
+                                "- ${_selectedDate.hour.toString().padLeft(2, '0')}:${_selectedDate.minute.toString().padLeft(2, '0')}",
                               ),
                               const Spacer(),
-                              Icon(Icons.calendar_today, color: Theme.of(context).iconTheme.color),
+                              const Icon(Icons.calendar_today),
                             ],
                           ),
                         ),
                       ),
+
                       const SizedBox(height: 24),
+
+                      // Butonlar
                       Row(
                         children: [
                           Expanded(
@@ -236,11 +237,10 @@ class _ExpensePopupState extends State<ExpensePopup> {
                               onPressed: widget.onCancel,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Theme.of(context).disabledColor,
-                                foregroundColor: Theme.of(context).textTheme.bodyLarge!.color,
+                                foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 16),
                               ),
                               child: const Text('İptal'),
                             ),
@@ -248,63 +248,15 @@ class _ExpensePopupState extends State<ExpensePopup> {
                           const SizedBox(width: 16),
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: () {
-                                if (_amountController.text.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Lütfen bir tutar girin'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                double amount;
-                                try {
-                                  amount = double.parse(_amountController.text.replaceAll(',', '.'));
-                                } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Geçerli bir tutar girin'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                if (amount <= 0) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Tutar 0\'dan büyük olmalıdır'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                if (widget.initialTransaction != null) {
-                                  final updatedTransaction = Transaction(
-                                    type: 'expense',
-                                    category: _selectedCategory,
-                                    amount: amount,
-                                    description: _descriptionController.text,
-                                    dateTime: _selectedDate,
-                                  );
-                                  widget.onSubmit(updatedTransaction);
-                                } else {
-                                  widget.onAdd(
-                                    _selectedCategory,
-                                    amount,
-                                    _descriptionController.text,
-                                    _selectedDate,
-                                  );
-                                }
-                              },
-                              style: Theme.of(context).elevatedButtonTheme.style,
-                              child: const Text(
-                                'Ekle',
-                                style: TextStyle(color: Colors.white),
+                              onPressed: _handleSubmit,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.expense,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
+                              child: const Text('Ekle'),
                             ),
                           ),
                         ],
@@ -316,6 +268,39 @@ class _ExpensePopupState extends State<ExpensePopup> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String label) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(label, style: Theme.of(context).textTheme.titleMedium),
+    );
+  }
+
+  Widget _buildDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Theme.of(context).dividerColor),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButton<String>(
+        value: _selectedCategory,
+        isExpanded: true,
+        underline: const SizedBox(),
+        items: widget.categories.map((category) {
+          return DropdownMenuItem<String>(
+            value: category,
+            child: Text(category),
+          );
+        }).toList(),
+        onChanged: (value) {
+          setState(() {
+            _selectedCategory = value!;
+          });
+        },
       ),
     );
   }
