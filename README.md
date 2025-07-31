@@ -20,11 +20,6 @@ Bu uygulama kişinin gelir ve giderlerini tutabileceği ve parasının hesabın�
 <img src="assets/readmephoto/fazlasiyah.png" width="300"/>
 <img src="assets/readmephoto/fazlabeyaz.png" width="300"/>
 
-## Ayarlar Ekranı 
-
-<img src="assets/readmephoto/ayarbeyaz.png" width="300"/>
-<img src="assets/readmephoto/ayarsiyah.png" width="300"/>
-
 ## Aylık Giderler Ekranı
 
 <img src="assets/readmephoto/aylıksiyah.png" width="300"/>
