@@ -1,6 +1,5 @@
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:hive/hive.dart' show HiveType, HiveField;
 
 part 'transaction.g.dart'; // Bu dosya build_runner ile otomatik oluşturulacak
 
