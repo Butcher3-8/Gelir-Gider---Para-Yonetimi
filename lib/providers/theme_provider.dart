@@ -21,9 +21,10 @@ class ThemeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleTheme() async {
+  void toggleTheme() {
     _isDarkMode = !_isDarkMode;
-    await _box.put(_themeKey, _isDarkMode);
     notifyListeners();
+    // Kaydı arka planda yap, UI'ı bloklama (kasma önlemi)
+    Future.microtask(() => _box.put(_themeKey, _isDarkMode));
   }
 }

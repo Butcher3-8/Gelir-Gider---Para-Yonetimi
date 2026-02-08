@@ -102,17 +102,9 @@ class CustomDrawer extends StatelessWidget {
                     size: 24,
                   ),
                   const SizedBox(width: 8),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    child: Switch(
-                      key: ValueKey<bool>(themeProvider.isDarkMode),
-                      value: themeProvider.isDarkMode,
-                      activeColor: Colors.amber[600],
-                      inactiveThumbColor: Colors.grey[400],
-                      onChanged: (value) {
-                        themeProvider.toggleTheme();
-                      },
-                    ),
+                  Switch(
+                    value: themeProvider.isDarkMode,
+                    onChanged: (_) => themeProvider.toggleTheme(),
                   ),
                 ],
               ),
