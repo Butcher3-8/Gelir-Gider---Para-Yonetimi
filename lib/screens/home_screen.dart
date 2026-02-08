@@ -344,7 +344,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final currencyProvider = Provider.of<CurrencyProvider>(context);
     _updateEvents();
 
-    return Scaffold(
+    return Stack(
+      children: [
+        Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       drawer: const CustomDrawer(),
       appBar: AppBar(
@@ -531,100 +533,112 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          if (_isExpensePopupVisible)
-            ExpensePopup(
-              categories: ['Yiyecek', 'Ulaşım', 'Fatura', 'Alışveriş', 'Verilen Borç', 'Eğlence', 'Diğer'],
-              onAdd: (category, amount, description, time) {
-                if (_isEditMode) {
-                  Transaction updatedTx = Transaction(
-                    type: 'expense',
-                    category: category,
-                    amount: amount,
-                    description: description,
-                    dateTime: time,
-                  );
-                  _updateTransaction(updatedTx);
-                } else {
-                  Transaction newTx = Transaction(
-                    type: 'expense',
-                    category: category,
-                    amount: amount,
-                    description: description,
-                    dateTime: time,
-                  );
-                  _saveTransaction(newTx);
-                }
-                setState(() {
-                  _isExpensePopupVisible = false;
-                });
-              },
-              onCancel: () {
-                setState(() {
-                  _isExpensePopupVisible = false;
-                  _isEditMode = false;
-                });
-              },
-              onSubmit: (Transaction tx) {
-                if (_isEditMode) {
-                  _updateTransaction(tx);
-                } else {
-                  _saveTransaction(tx);
-                }
-                setState(() {
-                  _isExpensePopupVisible = false;
-                  _isEditMode = false;
-                });
-              },
-              initialTransaction: _isEditMode && _transactionToEdit.type == 'expense' ? _transactionToEdit : null,
-            ),
-          if (_isIncomePopupVisible)
-            IncomePopup(
-              categories: ['Maaş', 'Burs', 'Harçlık', 'Ek Gelir', 'Alınan Borç', 'Diğer'],
-              onAdd: (category, amount, description, time) {
-                if (_isEditMode) {
-                  Transaction updatedTx = Transaction(
-                    type: 'income',
-                    category: category,
-                    amount: amount,
-                    description: description,
-                    dateTime: time,
-                  );
-                  _updateTransaction(updatedTx);
-                } else {
-                  Transaction newTx = Transaction(
-                    type: 'income',
-                    category: category,
-                    amount: amount,
-                    description: description,
-                    dateTime: time,
-                  );
-                  _saveTransaction(newTx);
-                }
-                setState(() {
-                  _isIncomePopupVisible = false;
-                });
-              },
-              onCancel: () {
-                setState(() {
-                  _isIncomePopupVisible = false;
-                  _isEditMode = false;
-                });
-              },
-              onSubmit: (Transaction tx) {
-                if (_isEditMode) {
-                  _updateTransaction(tx);
-                } else {
-                  _saveTransaction(tx);
-                }
-                setState(() {
-                  _isIncomePopupVisible = false;
-                  _isEditMode = false;
-                });
-              },
-              initialTransaction: _isEditMode && _transactionToEdit.type == 'income' ? _transactionToEdit : null,
-            ),
         ],
       ),
+    ),
+    if (_isExpensePopupVisible)
+      Positioned.fill(
+        child: Material(
+          color: Colors.transparent,
+          child: ExpensePopup(
+            categories: ['Yiyecek', 'Ulaşım', 'Fatura', 'Alışveriş', 'Verilen Borç', 'Eğlence', 'Diğer'],
+            onAdd: (category, amount, description, time) {
+              if (_isEditMode) {
+                Transaction updatedTx = Transaction(
+                  type: 'expense',
+                  category: category,
+                  amount: amount,
+                  description: description,
+                  dateTime: time,
+                );
+                _updateTransaction(updatedTx);
+              } else {
+                Transaction newTx = Transaction(
+                  type: 'expense',
+                  category: category,
+                  amount: amount,
+                  description: description,
+                  dateTime: time,
+                );
+                _saveTransaction(newTx);
+              }
+              setState(() {
+                _isExpensePopupVisible = false;
+              });
+            },
+            onCancel: () {
+              setState(() {
+                _isExpensePopupVisible = false;
+                _isEditMode = false;
+              });
+            },
+            onSubmit: (Transaction tx) {
+              if (_isEditMode) {
+                _updateTransaction(tx);
+              } else {
+                _saveTransaction(tx);
+              }
+              setState(() {
+                _isExpensePopupVisible = false;
+                _isEditMode = false;
+              });
+            },
+            initialTransaction: _isEditMode && _transactionToEdit.type == 'expense' ? _transactionToEdit : null,
+          ),
+        ),
+      ),
+    if (_isIncomePopupVisible)
+      Positioned.fill(
+        child: Material(
+          color: Colors.transparent,
+          child: IncomePopup(
+            categories: ['Maaş', 'Burs', 'Harçlık', 'Ek Gelir', 'Alınan Borç', 'Diğer'],
+            onAdd: (category, amount, description, time) {
+              if (_isEditMode) {
+                Transaction updatedTx = Transaction(
+                  type: 'income',
+                  category: category,
+                  amount: amount,
+                  description: description,
+                  dateTime: time,
+                );
+                _updateTransaction(updatedTx);
+              } else {
+                Transaction newTx = Transaction(
+                  type: 'income',
+                  category: category,
+                  amount: amount,
+                  description: description,
+                  dateTime: time,
+                );
+                _saveTransaction(newTx);
+              }
+              setState(() {
+                _isIncomePopupVisible = false;
+              });
+            },
+            onCancel: () {
+              setState(() {
+                _isIncomePopupVisible = false;
+                _isEditMode = false;
+              });
+            },
+            onSubmit: (Transaction tx) {
+              if (_isEditMode) {
+                _updateTransaction(tx);
+              } else {
+                _saveTransaction(tx);
+              }
+              setState(() {
+                _isIncomePopupVisible = false;
+                _isEditMode = false;
+              });
+            },
+            initialTransaction: _isEditMode && _transactionToEdit.type == 'income' ? _transactionToEdit : null,
+          ),
+        ),
+      ),
+      ],
     );
   }
 }
