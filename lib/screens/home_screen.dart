@@ -206,6 +206,133 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildActionBar(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            spreadRadius: 1,
+            blurRadius: 10,
+            offset: const Offset(0, -3),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + bottomPadding),
+        child: Row(
+          children: [
+              Expanded(
+                child: GestureDetector(
+                  onTapDown: (_) => _onTapDown('expense'),
+                  onTapUp: (_) => _onTapUp('expense'),
+                  onTapCancel: () => _onTapUp('expense'),
+                  onTap: () {
+                    setState(() {
+                      _isEditMode = false;
+                      _isExpensePopupVisible = true;
+                    });
+                  },
+                  child: AnimatedScale(
+                    scale: _expenseScale,
+                    duration: const Duration(milliseconds: 150),
+                    child: Container(
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: AppColors.expense,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.expense.withOpacity(0.4),
+                            spreadRadius: 1,
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      alignment: Alignment.center,
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.remove_circle_outline,
+                            color: Colors.white,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Gider Ekle',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: GestureDetector(
+                  onTapDown: (_) => _onTapDown('income'),
+                  onTapUp: (_) => _onTapUp('income'),
+                  onTapCancel: () => _onTapUp('income'),
+                  onTap: () {
+                    setState(() {
+                      _isEditMode = false;
+                      _isIncomePopupVisible = true;
+                    });
+                  },
+                  child: AnimatedScale(
+                    scale: _incomeScale,
+                    duration: const Duration(milliseconds: 150),
+                    child: Container(
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: AppColors.income,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.income.withOpacity(0.4),
+                            spreadRadius: 1,
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      alignment: Alignment.center,
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_circle_outline,
+                            color: Colors.white,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Gelir Ekle',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     Hive.box<Transaction>('transactions').close();
@@ -243,6 +370,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: _buildActionBar(context),
       body: Stack(
         children: [
           Column(
@@ -257,7 +385,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          AppColors.income.withOpacity(0.8),
+                          const Color.fromARGB(255, 27, 107, 47).withOpacity(0.8),
                           AppColors.expense.withOpacity(0.5),
                         ],
                         begin: Alignment.topLeft,
@@ -311,7 +439,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                       calendarStyle: CalendarStyle(
                         selectedDecoration: BoxDecoration(
-                          color: AppColors.income,
+                          color: const Color.fromARGB(255, 27, 107, 47),
                           shape: BoxShape.circle,
                         ),
                         todayDecoration: BoxDecoration(
@@ -400,129 +528,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardTheme.color,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      spreadRadius: 1,
-                      blurRadius: 10,
-                      offset: const Offset(0, -3),
-                    ),
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTapDown: (_) => _onTapDown('expense'),
-                          onTapUp: (_) => _onTapUp('expense'),
-                          onTapCancel: () => _onTapUp('expense'),
-                          onTap: () {
-                            setState(() {
-                              _isEditMode = false;
-                              _isExpensePopupVisible = true;
-                            });
-                          },
-                          child: AnimatedScale(
-                            scale: _expenseScale,
-                            duration: const Duration(milliseconds: 150),
-                            child: Container(
-                              height: 60,
-                              decoration: BoxDecoration(
-                                color: AppColors.expense,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.expense.withOpacity(0.4),
-                                    spreadRadius: 1,
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              alignment: Alignment.center,
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.remove_circle_outline,
-                                    color: Colors.white,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Gider Ekle',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: GestureDetector(
-                          onTapDown: (_) => _onTapDown('income'),
-                          onTapUp: (_) => _onTapUp('income'),
-                          onTapCancel: () => _onTapUp('income'),
-                          onTap: () {
-                            setState(() {
-                              _isEditMode = false;
-                              _isIncomePopupVisible = true;
-                            });
-                          },
-                          child: AnimatedScale(
-                            scale: _incomeScale,
-                            duration: const Duration(milliseconds: 150),
-                            child: Container(
-                              height: 60,
-                              decoration: BoxDecoration(
-                                color: AppColors.income,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.income.withOpacity(0.4),
-                                    spreadRadius: 1,
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              alignment: Alignment.center,
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.add_circle_outline,
-                                    color: Colors.white,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Gelir Ekle',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ),
             ],
           ),
