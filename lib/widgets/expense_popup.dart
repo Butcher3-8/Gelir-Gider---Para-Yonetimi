@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction.dart';
 import '../constants/app_colors.dart';
 import '../providers/currency_provider.dart';
+import 'date_picker_dialog.dart';
 
 class ExpensePopup extends StatefulWidget {
   final List<String> categories;
@@ -50,45 +52,26 @@ class _ExpensePopupState extends State<ExpensePopup> {
     super.dispose();
   }
 
-  Future<void> _selectDate() async {
-    final pickedDate = await showDatePicker(
+  void _selectDate() {
+    final now = DateTime.now();
+    final maxDate = DateTime(now.year, now.month, now.day);
+
+    showDialog<void>(
       context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now().add(const Duration(days: 1)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-                  primary: AppColors.expense,
-                  onPrimary: Colors.white,
-                  onSurface: Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
-                ),
-            dialogBackgroundColor: Theme.of(context).cardColor,
-          ),
-          child: child!,
-        );
-      },
+      barrierColor: Colors.transparent,
+      builder: (ctx) => AppDatePickerDialog(
+        initialDate: _selectedDate,
+        maxDate: maxDate,
+        showDayAndTime: true,
+        onSelect: (date) {
+          setState(() {
+            _selectedDate = date;
+          });
+          Navigator.of(ctx).pop();
+        },
+        onCancel: () => Navigator.of(ctx).pop(),
+      ),
     );
-
-    if (pickedDate != null) {
-      final pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(_selectedDate),
-      );
-
-      if (pickedTime != null) {
-        setState(() {
-          _selectedDate = DateTime(
-            pickedDate.year,
-            pickedDate.month,
-            pickedDate.day,
-            pickedTime.hour,
-            pickedTime.minute,
-          );
-        });
-      }
-    }
   }
 
   void _handleSubmit() {
@@ -136,137 +119,149 @@ class _ExpensePopupState extends State<ExpensePopup> {
   @override
   Widget build(BuildContext context) {
     final currencyProvider = Provider.of<CurrencyProvider>(context, listen: false);
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.5),
-      resizeToAvoidBottomInset: true,
-      body: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: Center(
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.9,
-            margin: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 16,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-            ),
-            child: Material(
-              borderRadius: BorderRadius.circular(16),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Container(
+        color: Colors.black.withOpacity(0.5),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.only(
+                top: 16,
+                bottom: bottomInset + 16,
+                left: constraints.maxWidth * 0.05,
+                right: constraints.maxWidth * 0.05,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - bottomInset - 32,
+                ),
+                child: Center(
+                  child: Material(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.remove_circle_outline, color: AppColors.expense),
-                          const SizedBox(width: 8),
-                          Text(
-                            widget.initialTransaction != null ? 'Gider Düzenle' : 'Gider Ekle',
-                            style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                                  color: AppColors.expense,
-                                ),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: widget.onCancel,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Kategori
-                      _buildLabel('Kategori'),
-                      _buildDropdown(),
-
-                      const SizedBox(height: 16),
-
-                      // Tutar
-                      _buildLabel('Tutar'),
-                      TextField(
-                        controller: _amountController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: InputDecoration(
-                          hintText: '0.00',
-                          suffixText: currencyProvider.currencySymbol,
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Açıklama
-                      _buildLabel('Açıklama'),
-                      TextField(
-                        controller: _descriptionController,
-                        decoration: const InputDecoration(hintText: 'Açıklama girin'),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Tarih
-                      _buildLabel('Tarih'),
-                      InkWell(
-                        onTap: _selectDate,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Theme.of(context).dividerColor),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
+                          Row(
                             children: [
+                              Icon(Icons.remove_circle_outline, color: AppColors.expense),
+                              const SizedBox(width: 8),
                               Text(
-                                "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year} "
-                                "- ${_selectedDate.hour.toString().padLeft(2, '0')}:${_selectedDate.minute.toString().padLeft(2, '0')}",
+                                widget.initialTransaction != null ? 'Gider Düzenle' : 'Gider Ekle',
+                                style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                                      color: AppColors.expense,
+                                    ),
                               ),
                               const Spacer(),
-                              const Icon(Icons.calendar_today),
+                              IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: widget.onCancel,
+                              ),
                             ],
                           ),
-                        ),
-                      ),
+                          const SizedBox(height: 16),
 
-                      const SizedBox(height: 24),
+                          // Kategori
+                          _buildLabel('Kategori'),
+                          _buildDropdown(),
 
-                      // Butonlar
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: widget.onCancel,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).disabledColor,
-                                foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: const Text('İptal'),
+                          const SizedBox(height: 16),
+
+                          // Tutar
+                          _buildLabel('Tutar'),
+                          TextField(
+                            controller: _amountController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            decoration: InputDecoration(
+                              hintText: '0.00',
+                              suffixText: currencyProvider.currencySymbol,
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _handleSubmit,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.expense,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+
+                          const SizedBox(height: 16),
+
+                          // Açıklama
+                          _buildLabel('Açıklama'),
+                          TextField(
+                            controller: _descriptionController,
+                            decoration: const InputDecoration(hintText: 'Açıklama girin'),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Tarih
+                          _buildLabel('Tarih'),
+                          InkWell(
+                            onTap: _selectDate,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: AppColors.expense.withOpacity(0.06),
+                                border: Border.all(color: AppColors.expense.withOpacity(0.3)),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.calendar_month_rounded, color: AppColors.expense, size: 20),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    DateFormat('dd MMM yyyy  •  HH:mm', 'tr_TR').format(_selectedDate),
+                                    style: Theme.of(context).textTheme.bodyLarge,
+                                  ),
+                                  const Spacer(),
+                                  Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.expense),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // Butonlar
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: widget.onCancel,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Theme.of(context).disabledColor,
+                                    foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: const Text('İptal'),
                                 ),
                               ),
-                              child: const Text('Ekle'),
-                            ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: _handleSubmit,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.expense,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: const Text('Ekle'),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );

@@ -57,14 +57,6 @@ class MyApp extends StatelessWidget {
             ],
             routerConfig: router,
             debugShowCheckedModeBanner: false,
-            builder: (context, child) {
-              return AnimatedTheme(
-                data: themeProvider.currentTheme,
-                duration: const Duration(milliseconds: 280),
-                curve: Curves.easeInOut,
-                child: child ?? const SizedBox.shrink(),
-              );
-            },
           );
         },
       ),

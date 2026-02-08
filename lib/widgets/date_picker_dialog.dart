@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
 /// Ortada açılan, bulanık arka planlı, yıl/ay seçimli tarih seçici dialog.
+/// [showDayAndTime] true olduğunda gün ve saat/dakika seçimi de gösterilir.
 class AppDatePickerDialog extends StatefulWidget {
   final DateTime initialDate;
   final DateTime maxDate;
   final ValueChanged<DateTime> onSelect;
   final VoidCallback onCancel;
+  final bool showDayAndTime;
 
   const AppDatePickerDialog({
     super.key,
@@ -17,6 +19,7 @@ class AppDatePickerDialog extends StatefulWidget {
     required this.maxDate,
     required this.onSelect,
     required this.onCancel,
+    this.showDayAndTime = false,
   });
 
   @override
@@ -30,21 +33,35 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
   ];
 
   late DateTime _focusedDay;
+  late int _selectedDay;
+  late int _selectedHour;
+  late int _selectedMinute;
 
   @override
   void initState() {
     super.initState();
     _focusedDay = DateTime(widget.initialDate.year, widget.initialDate.month, 1);
+    _selectedDay = widget.initialDate.day;
+    _selectedHour = widget.initialDate.hour;
+    _selectedMinute = widget.initialDate.minute;
   }
 
   int get _firstYear => 2000;
   int get _lastYear => widget.maxDate.year;
 
+  int _daysInMonth(int year, int month) {
+    return DateTime(year, month + 1, 0).day;
+  }
+
   void _goToYearMonth(int year, int month) {
+    final maxDays = _daysInMonth(year, month);
     setState(() {
       _focusedDay = DateTime(year, month, 1);
       if (_focusedDay.isAfter(widget.maxDate)) {
         _focusedDay = widget.maxDate;
+      }
+      if (_selectedDay > maxDays) {
+        _selectedDay = maxDays;
       }
     });
   }
@@ -141,6 +158,48 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
                           ],
                         ),
                       ),
+                      if (widget.showDayAndTime) ...[
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _DropdownTile<int>(
+                                  value: _selectedDay,
+                                  items: List.generate(
+                                    _daysInMonth(_focusedDay.year, _focusedDay.month),
+                                    (i) => i + 1,
+                                  ),
+                                  valueLabel: (v) => '$v',
+                                  onChanged: (day) => setState(() => _selectedDay = day!),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _DropdownTile<int>(
+                                  value: _selectedHour,
+                                  items: List.generate(24, (i) => i),
+                                  valueLabel: (v) => v.toString().padLeft(2, '0'),
+                                  onChanged: (h) => setState(() => _selectedHour = h!),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                child: Text(':', style: Theme.of(context).textTheme.titleLarge),
+                              ),
+                              Expanded(
+                                child: _DropdownTile<int>(
+                                  value: _selectedMinute,
+                                  items: List.generate(60, (i) => i),
+                                  valueLabel: (v) => v.toString().padLeft(2, '0'),
+                                  onChanged: (m) => setState(() => _selectedMinute = m!),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -150,7 +209,9 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
                               child: OutlinedButton.icon(
                                 onPressed: () {
                                   final now = DateTime.now();
-                                  if (now.year < widget.maxDate.year ||
+                                  if (widget.showDayAndTime) {
+                                    widget.onSelect(now);
+                                  } else if (now.year < widget.maxDate.year ||
                                       (now.year == widget.maxDate.year && now.month <= widget.maxDate.month)) {
                                     widget.onSelect(DateTime(now.year, now.month, 1));
                                   }
@@ -169,7 +230,17 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
                               flex: 2,
                               child: FilledButton.icon(
                                 onPressed: () {
-                                  widget.onSelect(DateTime(_focusedDay.year, _focusedDay.month, 1));
+                                  if (widget.showDayAndTime) {
+                                    widget.onSelect(DateTime(
+                                      _focusedDay.year,
+                                      _focusedDay.month,
+                                      _selectedDay,
+                                      _selectedHour,
+                                      _selectedMinute,
+                                    ));
+                                  } else {
+                                    widget.onSelect(DateTime(_focusedDay.year, _focusedDay.month, 1));
+                                  }
                                 },
                                 icon: const Icon(Icons.check_rounded, size: 20),
                                 label: const Text('Seç'),

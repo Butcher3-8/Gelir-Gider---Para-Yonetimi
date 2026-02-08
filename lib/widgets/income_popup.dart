@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction.dart';
 import '../constants/app_colors.dart';
 import '../providers/currency_provider.dart';
+import 'date_picker_dialog.dart';
 
 class IncomePopup extends StatefulWidget {
   final List<String> categories;
@@ -53,119 +55,129 @@ class _IncomePopupState extends State<IncomePopup> {
     super.dispose();
   }
 
-  void _selectDate() async {
-    final DateTime? pickedDate = await showDatePicker(
+  void _selectDate() {
+    final now = DateTime.now();
+    final maxDate = DateTime(now.year, now.month, now.day);
+
+    showDialog<void>(
       context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now().add(const Duration(days: 1)),
+      barrierColor: Colors.transparent,
+      builder: (ctx) => AppDatePickerDialog(
+        initialDate: _selectedDate,
+        maxDate: maxDate,
+        showDayAndTime: true,
+        onSelect: (date) {
+          setState(() {
+            _selectedDate = date;
+          });
+          Navigator.of(ctx).pop();
+        },
+        onCancel: () => Navigator.of(ctx).pop(),
+      ),
     );
-
-    if (pickedDate != null) {
-      final TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(_selectedDate),
-      );
-
-      if (pickedTime != null) {
-        setState(() {
-          _selectedDate = DateTime(
-            pickedDate.year,
-            pickedDate.month,
-            pickedDate.day,
-            pickedTime.hour,
-            pickedTime.minute,
-          );
-        });
-      }
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     final currencyProvider = Provider.of<CurrencyProvider>(context);
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Center(
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.9,
-            margin: const EdgeInsets.symmetric(vertical: 24),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.add_circle_outline, color: AppColors.income),
-                      const SizedBox(width: 8),
-                      Text(
-                        widget.initialTransaction != null ? 'Gelir Düzenle' : 'Gelir Ekle',
-                        style: Theme.of(context).textTheme.titleLarge!.copyWith(color: AppColors.income),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        icon: Icon(Icons.close, color: Theme.of(context).iconTheme.color),
-                        onPressed: widget.onCancel,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDropdown(context),
-                  const SizedBox(height: 16),
-                  _buildTextField(
-                    context,
-                    label: 'Tutar',
-                    controller: _amountController,
-                    keyboardType: TextInputType.number,
-                    suffixText: currencyProvider.currencySymbol,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildTextField(
-                    context,
-                    label: 'Açıklama',
-                    controller: _descriptionController,
-                    hintText: 'Açıklama girin',
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Tarih', style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: _selectDate,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Theme.of(context).dividerColor),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year} - ${_selectedDate.hour.toString().padLeft(2, '0')}:${_selectedDate.minute.toString().padLeft(2, '0')}",
-                            style: Theme.of(context).textTheme.bodyLarge,
+      child: Container(
+        color: Colors.black.withOpacity(0.5),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.only(
+                top: 16,
+                bottom: bottomInset + 16,
+                left: constraints.maxWidth * 0.05,
+                right: constraints.maxWidth * 0.05,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - bottomInset - 32,
+                ),
+                child: Center(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.add_circle_outline, color: AppColors.income),
+                            const SizedBox(width: 8),
+                            Text(
+                              widget.initialTransaction != null ? 'Gelir Düzenle' : 'Gelir Ekle',
+                              style: Theme.of(context).textTheme.titleLarge!.copyWith(color: AppColors.income),
+                            ),
+                            const Spacer(),
+                            IconButton(
+                              icon: Icon(Icons.close, color: Theme.of(context).iconTheme.color),
+                              onPressed: widget.onCancel,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        _buildDropdown(context),
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          context,
+                          label: 'Tutar',
+                          controller: _amountController,
+                          keyboardType: TextInputType.number,
+                          suffixText: currencyProvider.currencySymbol,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          context,
+                          label: 'Açıklama',
+                          controller: _descriptionController,
+                          hintText: 'Açıklama girin',
+                        ),
+                        const SizedBox(height: 16),
+                        Text('Tarih', style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                        InkWell(
+                          onTap: _selectDate,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: AppColors.income.withOpacity(0.06),
+                              border: Border.all(color: AppColors.income.withOpacity(0.3)),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.calendar_month_rounded, color: AppColors.income, size: 20),
+                                const SizedBox(width: 10),
+                                Text(
+                                  DateFormat('dd MMM yyyy  •  HH:mm', 'tr_TR').format(_selectedDate),
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                                const Spacer(),
+                                Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.income),
+                              ],
+                            ),
                           ),
-                          const Spacer(),
-                          Icon(Icons.calendar_today, color: Theme.of(context).iconTheme.color),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 24),
+                        _buildButtons(context),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  _buildButtons(context),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );

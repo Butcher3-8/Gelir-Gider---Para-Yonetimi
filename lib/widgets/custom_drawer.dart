@@ -122,10 +122,8 @@ class CustomDrawer extends StatelessWidget {
                       Switch(
                         value: isDark,
                         onChanged: (_) {
+                          themeProvider.toggleTheme();
                           Navigator.pop(context);
-                          Future.delayed(const Duration(milliseconds: 300), () {
-                            themeProvider.toggleTheme();
-                          });
                         },
                       ),
                     ],

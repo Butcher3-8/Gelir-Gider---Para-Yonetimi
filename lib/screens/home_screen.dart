@@ -376,12 +376,13 @@ class _HomeScreenState extends State<HomeScreen> {
           Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 child: Card(
                   elevation: Theme.of(context).cardTheme.elevation,
-                  shape: Theme.of(context).cardTheme.shape,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   child: Container(
-                    padding: const EdgeInsets.all(16),
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -391,18 +392,17 @@ class _HomeScreenState extends State<HomeScreen> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'Toplam Bakiyeniz',
-                          style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                                 color: Colors.white,
                               ),
                         ),
-                        const SizedBox(height: 8),
                         Text(
                           NumberFormat.currency(
                             locale: 'tr_TR',

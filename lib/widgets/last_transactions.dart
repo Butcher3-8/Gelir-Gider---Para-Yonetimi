@@ -34,39 +34,49 @@ class LastTransactions extends StatelessWidget {
     }
 
     // En son eklenen işlemler en üstte gösterilecek
-    final displayedTransactions = transactions.reversed.take(5).toList();
+    final displayedTransactions = transactions.reversed.take(3).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: displayedTransactions.map((tx) {
+        final isExpense = tx.type == 'expense';
         return Card(
-          margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-          elevation: 2,
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: tx.type == 'expense' ? AppColors.expense : AppColors.income,
-              child: Icon(
-                tx.type == 'expense' ? Icons.arrow_upward : Icons.arrow_downward,
-                color: Colors.white,
-              ),
-            ),
-            title: Text(
-              tx.category,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 4),
+          elevation: 1,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(
               children: [
-                Text(tx.description),
-                Text(
-                  DateFormat('dd.MM.yyyy - HH:mm').format(tx.dateTime),
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: isExpense ? AppColors.expense : AppColors.income,
+                  child: Icon(
+                    isExpense ? Icons.arrow_upward : Icons.arrow_downward,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
-              ],
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        tx.category,
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${tx.description.isNotEmpty ? tx.description : '-'}  •  ${DateFormat('dd MMM, HH:mm', 'tr_TR').format(tx.dateTime)}',
+                        style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
                 Text(
                   NumberFormat.currency(
                     locale: 'tr_TR',
@@ -74,20 +84,30 @@ class LastTransactions extends StatelessWidget {
                     decimalDigits: 2,
                   ).format(tx.amount),
                   style: TextStyle(
-                    color: tx.type == 'expense' ? AppColors.expense : AppColors.income,
+                    color: isExpense ? AppColors.expense : AppColors.income,
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 14,
                   ),
                 ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.edit, size: 20),
-                  color: Colors.grey,
-                  onPressed: () => onEdit(tx),
+                const SizedBox(width: 4),
+                SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    icon: const Icon(Icons.edit, size: 16),
+                    color: Colors.grey,
+                    onPressed: () => onEdit(tx),
+                  ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.delete, size: 20, color: Colors.red),
-                  onPressed: () => _showDeleteConfirmation(context, tx),
+                SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    icon: const Icon(Icons.delete, size: 16, color: Colors.red),
+                    onPressed: () => _showDeleteConfirmation(context, tx),
+                  ),
                 ),
               ],
             ),
