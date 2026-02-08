@@ -1,12 +1,10 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:table_calendar/table_calendar.dart';
 import '../models/transaction.dart';
 import '../constants/app_colors.dart';
 import '../providers/currency_provider.dart';
+import '../widgets/date_picker_dialog.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
   final List<Transaction> transactions;
@@ -18,27 +16,27 @@ class TransactionHistoryScreen extends StatefulWidget {
 }
 
 class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
+  /// Seçilen ay (gün her zaman 1 kullanılır, sadece yıl/ay önemli).
   DateTime selectedDate = DateTime.now();
 
   List<Transaction> get filteredTransactions {
     return widget.transactions.where((tx) =>
         tx.dateTime.year == selectedDate.year &&
-        tx.dateTime.month == selectedDate.month &&
-        tx.dateTime.day == selectedDate.day).toList();
+        tx.dateTime.month == selectedDate.month).toList();
   }
 
   void _selectDate() {
     final now = DateTime.now();
-    final maxDate = DateTime(now.year, now.month, now.day + 1);
+    final maxDate = DateTime(now.year, now.month, 1);
 
     showDialog<void>(
       context: context,
       barrierColor: Colors.transparent,
-      builder: (context) => _DatePickerDialog(
+      builder: (context) => AppDatePickerDialog(
         initialDate: selectedDate,
         maxDate: maxDate,
         onSelect: (date) {
-          setState(() => selectedDate = date);
+          setState(() => selectedDate = DateTime(date.year, date.month, 1));
           Navigator.of(context).pop();
         },
         onCancel: () => Navigator.of(context).pop(),
@@ -48,11 +46,13 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
   void _changeDate(bool isNext) {
     setState(() {
-      selectedDate = isNext
-          ? selectedDate.add(const Duration(days: 1))
-          : selectedDate.subtract(const Duration(days: 1));
-      if (selectedDate.isAfter(DateTime.now().add(const Duration(days: 1)))) {
-        selectedDate = DateTime.now();
+      if (isNext) {
+        if (selectedDate.year < DateTime.now().year ||
+            selectedDate.month < DateTime.now().month) {
+          selectedDate = DateTime(selectedDate.year, selectedDate.month + 1, 1);
+        }
+      } else {
+        selectedDate = DateTime(selectedDate.year, selectedDate.month - 1, 1);
       }
     });
   }
@@ -142,7 +142,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                               child: AnimatedSwitcher(
                                 duration: const Duration(milliseconds: 250),
                                 child: Text(
-                                  DateFormat('d MMMM yyyy', 'tr_TR').format(selectedDate),
+                                  DateFormat('MMMM yyyy', 'tr_TR').format(selectedDate),
                                   key: ValueKey(selectedDate),
                                   textAlign: TextAlign.center,
                                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -158,7 +158,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       ),
                       _NavButton(
                         icon: Icons.chevron_right_rounded,
-                        onPressed: selectedDate.isBefore(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day))
+                        onPressed: (selectedDate.year < DateTime.now().year ||
+                                selectedDate.month < DateTime.now().month)
                             ? () => _changeDate(true)
                             : null,
                       ),
@@ -307,291 +308,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               endIndent: Theme.of(context).dividerTheme.endIndent,
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _DatePickerDialog extends StatefulWidget {
-  final DateTime initialDate;
-  final DateTime maxDate;
-  final ValueChanged<DateTime> onSelect;
-  final VoidCallback onCancel;
-
-  const _DatePickerDialog({
-    required this.initialDate,
-    required this.maxDate,
-    required this.onSelect,
-    required this.onCancel,
-  });
-
-  @override
-  State<_DatePickerDialog> createState() => _DatePickerDialogState();
-}
-
-class _DatePickerDialogState extends State<_DatePickerDialog> {
-  static const List<String> _monthNames = [
-    'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-    'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık',
-  ];
-
-  late DateTime _selectedDay;
-  late DateTime _focusedDay;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedDay = widget.initialDate;
-    _focusedDay = widget.initialDate;
-  }
-
-  int get _firstYear => 2000;
-  int get _lastYear => widget.maxDate.year;
-
-  void _goToYearMonth(int year, int month) {
-    setState(() {
-      _focusedDay = DateTime(year, month, 1);
-      if (_focusedDay.isAfter(widget.maxDate)) {
-        _focusedDay = widget.maxDate;
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cardColor = Theme.of(context).cardTheme.color ?? Theme.of(context).scaffoldBackgroundColor;
-
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: GestureDetector(
-            onTap: widget.onCancel,
-            child: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.35),
-                ),
-              ),
-            ),
-          ),
-        ),
-        Center(
-          child: GestureDetector(
-            onTap: () {}, // prevent tap from closing when tapping dialog
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 24),
-                constraints: const BoxConstraints(maxWidth: 400, maxHeight: 520),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Tarih Seç',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: widget.onCancel,
-                              icon: const Icon(Icons.close_rounded),
-                              style: IconButton.styleFrom(
-                                backgroundColor: Theme.of(context).dividerColor.withValues(alpha: 0.5),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _DropdownTile<int>(
-                                value: _focusedDay.year,
-                                items: List.generate(
-                                  _lastYear - _firstYear + 1,
-                                  (i) => _lastYear - i,
-                                ),
-                                label: 'Yıl',
-                                valueLabel: (v) => '$v',
-                                onChanged: (year) => _goToYearMonth(year!, _focusedDay.month),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _DropdownTile<int>(
-                                value: _focusedDay.month,
-                                items: List.generate(12, (i) => i + 1),
-                                label: 'Ay',
-                                valueLabel: (v) => _monthNames[v - 1],
-                                onChanged: (month) => _goToYearMonth(_focusedDay.year, month!),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            final now = DateTime.now();
-                            if (now.isBefore(widget.maxDate) || _isSameDay(now, widget.maxDate)) {
-                              widget.onSelect(DateTime(now.year, now.month, now.day));
-                            }
-                          },
-                          icon: const Icon(Icons.today_rounded, size: 20),
-                          label: const Text('Bugün'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.income,
-                            side: const BorderSide(color: AppColors.income),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          ),
-                        ),
-                      ),
-                      Flexible(
-                        child: SingleChildScrollView(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
-                            child: TableCalendar(
-                              locale: 'tr_TR',
-                              firstDay: DateTime(_firstYear, 1, 1),
-                              lastDay: widget.maxDate,
-                              focusedDay: _focusedDay,
-                              selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                              onDaySelected: (day, _) {
-                                if (!day.isAfter(widget.maxDate)) {
-                                  widget.onSelect(day);
-                                }
-                              },
-                              onPageChanged: (focused) {
-                                setState(() => _focusedDay = focused);
-                              },
-                              calendarStyle: CalendarStyle(
-                                selectedDecoration: BoxDecoration(
-                                  color: AppColors.income,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.income.withValues(alpha: 0.4),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                todayDecoration: BoxDecoration(
-                                  color: AppColors.expense.withValues(alpha: 0.5),
-                                  shape: BoxShape.circle,
-                                ),
-                                weekendTextStyle: TextStyle(
-                                  color: Theme.of(context).colorScheme.error,
-                                ),
-                                outsideDaysVisible: false,
-                                cellMargin: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-                              ),
-                              headerStyle: HeaderStyle(
-                                formatButtonVisible: false,
-                                titleCentered: true,
-                                titleTextStyle: Theme.of(context).textTheme.titleMedium!.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                leftChevronIcon: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.income.withValues(alpha: 0.15),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(Icons.chevron_left_rounded, color: AppColors.income, size: 20),
-                                ),
-                                rightChevronIcon: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.income.withValues(alpha: 0.15),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(Icons.chevron_right_rounded, color: AppColors.income, size: 20),
-                                ),
-                                headerPadding: const EdgeInsets.symmetric(vertical: 4),
-                              ),
-                              daysOfWeekStyle: DaysOfWeekStyle(
-                                weekdayStyle: Theme.of(context).textTheme.bodySmall!,
-                                weekendStyle: Theme.of(context).textTheme.bodySmall!.copyWith(
-                                  color: Theme.of(context).colorScheme.error,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
-}
-
-class _DropdownTile<T> extends StatelessWidget {
-  final T value;
-  final List<T> items;
-  final String label;
-  final String Function(T) valueLabel;
-  final ValueChanged<T?> onChanged;
-
-  const _DropdownTile({
-    required this.value,
-    required this.items,
-    required this.label,
-    required this.valueLabel,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.income.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.income.withValues(alpha: 0.25)),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          isExpanded: true,
-          icon: Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.income),
-          items: items.map((v) => DropdownMenuItem<T>(value: v, child: Text(valueLabel(v)))).toList(),
-          onChanged: onChanged,
-        ),
       ),
     );
   }

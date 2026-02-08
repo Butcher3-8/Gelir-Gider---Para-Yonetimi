@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/transaction.dart';
 import '../constants/app_colors.dart';
 import '../providers/currency_provider.dart';
+import '../widgets/date_picker_dialog.dart';
 
 class CategoryScreen extends StatefulWidget {
   final List<Transaction> transactions;
@@ -92,9 +93,39 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   void _nextMonth() {
-    setState(() {
-      _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1);
-    });
+    final now = DateTime.now();
+    if (_selectedMonth.year < now.year || _selectedMonth.month < now.month) {
+      setState(() {
+        _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1);
+      });
+    }
+  }
+
+  bool get _canGoNextMonth {
+    final now = DateTime.now();
+    return _selectedMonth.year < now.year ||
+        (_selectedMonth.year == now.year && _selectedMonth.month < now.month);
+  }
+
+  void _openDatePicker() {
+    final now = DateTime.now();
+    final maxDate = DateTime(now.year, now.month, now.day);
+
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.transparent,
+      builder: (context) => AppDatePickerDialog(
+        initialDate: DateTime(_selectedMonth.year, _selectedMonth.month, 1),
+        maxDate: maxDate,
+        onSelect: (date) {
+          setState(() {
+            _selectedMonth = DateTime(date.year, date.month);
+          });
+          Navigator.of(context).pop();
+        },
+        onCancel: () => Navigator.of(context).pop(),
+      ),
+    );
   }
 
   Widget _buildCategoryCard(String category, double amount, bool isExpense, String currencySymbol) {
@@ -160,39 +191,82 @@ class _CategoryScreenState extends State<CategoryScreen> {
       ),
       body: Column(
         children: [
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardTheme.color,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  spreadRadius: 1,
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _openDatePicker,
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.income.withValues(alpha: 0.12),
+                        AppColors.expense.withValues(alpha: 0.08),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppColors.income.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.income.withValues(alpha: 0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _CategoryNavButton(
+                        icon: Icons.chevron_left_rounded,
+                        onPressed: _previousMonth,
+                      ),
+                      Expanded(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppColors.income.withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.calendar_month_rounded,
+                                color: AppColors.income,
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Flexible(
+                              child: Text(
+                                DateFormat('MMMM yyyy', 'tr_TR').format(_selectedMonth),
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _CategoryNavButton(
+                        icon: Icons.chevron_right_rounded,
+                        onPressed: _canGoNextMonth ? _nextMonth : null,
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: _previousMonth,
-                  icon: const Icon(Icons.arrow_back_ios, size: 20),
-                ),
-                const SizedBox(width: 20),
-                Text(
-                  DateFormat('MMMM yyyy', 'tr_TR').format(_selectedMonth).toUpperCase(),
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(width: 20),
-                IconButton(
-                  onPressed: _nextMonth,
-                  icon: const Icon(Icons.arrow_forward_ios, size: 20),
-                ),
-              ],
+              ),
             ),
           ),
           Container(
@@ -354,6 +428,39 @@ class _CategoryScreenState extends State<CategoryScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CategoryNavButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  const _CategoryNavButton({required this.icon, this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final isEnabled = onPressed != null;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: isEnabled
+                ? AppColors.income.withValues(alpha: 0.15)
+                : Theme.of(context).disabledColor.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            size: 24,
+            color: isEnabled ? AppColors.income : Theme.of(context).disabledColor,
+          ),
+        ),
       ),
     );
   }
