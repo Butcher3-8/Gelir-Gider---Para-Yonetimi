@@ -22,6 +22,12 @@ class CustomDrawer extends StatelessWidget {
     'Euro',
   ];
 
+  final Map<String, String> currencySymbols = const {
+    'TL': '₺',
+    'Dolar': '\$',
+    'Euro': '€',
+  };
+
   @override
   Widget build(BuildContext context) {
     final currencyProvider = Provider.of<CurrencyProvider>(context);
@@ -140,7 +146,7 @@ class CustomDrawer extends StatelessWidget {
                     style: textTheme.titleSmall,
                   ),
                   subtitle: Text(
-                    currencyProvider.selectedCurrency,
+                    currencyProvider.currencySymbol,
                     style: textTheme.bodySmall,
                   ),
                   iconColor: Theme.of(context).iconTheme.color,
@@ -148,15 +154,20 @@ class CustomDrawer extends StatelessWidget {
                   childrenPadding: const EdgeInsets.only(left: 12, right: 12, bottom: 6),
                   children: currencies.map((currency) {
                     final selected = currencyProvider.selectedCurrency == currency;
+                    final symbol = currencySymbols[currency] ?? currency;
                     return ListTile(
                       contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       title: Text(
-                        currency,
+                        symbol,
                         style: textTheme.bodyMedium?.copyWith(
                           color: selected ? Colors.blue[700] : textTheme.bodyMedium?.color,
-                          fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                          fontSize: 18,
                         ),
                       ),
+                      trailing: selected
+                          ? Icon(Icons.check_rounded, color: Colors.blue[700], size: 18)
+                          : null,
                       onTap: () {
                         currencyProvider.setCurrency(currency);
                         Navigator.pop(context);
@@ -297,12 +308,7 @@ class CustomDrawer extends StatelessWidget {
       }
 
       await BackupService().restoreFromFile(filePath);
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Yedek geri yüklendi.'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      await _showRestoreInfoDialog(context);
     } catch (error) {
       messenger.showSnackBar(
         SnackBar(
@@ -311,5 +317,35 @@ class CustomDrawer extends StatelessWidget {
         ),
       );
     }
+  }
+
+  Future<void> _showRestoreInfoDialog(BuildContext context) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.blue),
+              SizedBox(width: 8),
+              Text('Bilgilendirme'),
+            ],
+          ),
+          content: const Text(
+            'Yedekleme başarıyla içe aktarıldı.\n\n'
+            'Değişikliklerin tamamen görünmesi için lütfen uygulamayı kapatıp yeniden açın.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Tamam'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

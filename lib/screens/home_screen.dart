@@ -342,7 +342,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final currencyProvider = Provider.of<CurrencyProvider>(context);
-    _updateEvents();
 
     return Stack(
       children: [
