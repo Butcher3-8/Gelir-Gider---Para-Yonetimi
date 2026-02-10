@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../models/transaction.dart';
+
 import '../constants/app_colors.dart';
+import '../models/transaction.dart';
 import '../providers/currency_provider.dart';
 import 'date_picker_dialog.dart';
 
@@ -35,7 +36,6 @@ class _IncomePopupState extends State<IncomePopup> {
   @override
   void initState() {
     super.initState();
-
     if (widget.initialTransaction != null) {
       _selectedCategory = widget.initialTransaction!.category;
       _amountController = TextEditingController(text: widget.initialTransaction!.amount.toString());
@@ -88,90 +88,97 @@ class _IncomePopupState extends State<IncomePopup> {
         color: Colors.black.withOpacity(0.5),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: EdgeInsets.only(
-                top: 16,
-                bottom: bottomInset + 16,
-                left: constraints.maxWidth * 0.05,
-                right: constraints.maxWidth * 0.05,
-              ),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - bottomInset - 32,
+            final horizontalPadding = constraints.maxWidth * 0.05;
+            final availableHeight = constraints.maxHeight - bottomInset - 24;
+            final maxCardHeight = availableHeight > 260 ? availableHeight : constraints.maxHeight * 0.9;
+
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  12,
+                  horizontalPadding,
+                  12 + bottomInset,
                 ),
-                child: Center(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: maxCardHeight),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.add_circle_outline, color: AppColors.income),
-                            const SizedBox(width: 8),
-                            Text(
-                              widget.initialTransaction != null ? 'Gelir Düzenle' : 'Gelir Ekle',
-                              style: Theme.of(context).textTheme.titleLarge!.copyWith(color: AppColors.income),
-                            ),
-                            const Spacer(),
-                            IconButton(
-                              icon: Icon(Icons.close, color: Theme.of(context).iconTheme.color),
-                              onPressed: widget.onCancel,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        _buildDropdown(context),
-                        const SizedBox(height: 16),
-                        _buildTextField(
-                          context,
-                          label: 'Tutar',
-                          controller: _amountController,
-                          keyboardType: TextInputType.number,
-                          suffixText: currencyProvider.currencySymbol,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildTextField(
-                          context,
-                          label: 'Açıklama',
-                          controller: _descriptionController,
-                          hintText: 'Açıklama girin',
-                        ),
-                        const SizedBox(height: 16),
-                        Text('Tarih', style: Theme.of(context).textTheme.titleMedium),
-                        const SizedBox(height: 8),
-                        InkWell(
-                          onTap: _selectDate,
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                            decoration: BoxDecoration(
-                              color: AppColors.income.withOpacity(0.06),
-                              border: Border.all(color: AppColors.income.withOpacity(0.3)),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
+                            Row(
                               children: [
-                                Icon(Icons.calendar_month_rounded, color: AppColors.income, size: 20),
-                                const SizedBox(width: 10),
+                                Icon(Icons.add_circle_outline, color: AppColors.income),
+                                const SizedBox(width: 8),
                                 Text(
-                                  DateFormat('dd MMM yyyy  •  HH:mm', 'tr_TR').format(_selectedDate),
-                                  style: Theme.of(context).textTheme.bodyLarge,
+                                  widget.initialTransaction != null ? 'Gelir Duzenle' : 'Gelir Ekle',
+                                  style: Theme.of(context).textTheme.titleLarge!.copyWith(color: AppColors.income),
                                 ),
                                 const Spacer(),
-                                Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.income),
+                                IconButton(
+                                  icon: Icon(Icons.close, color: Theme.of(context).iconTheme.color),
+                                  onPressed: widget.onCancel,
+                                ),
                               ],
                             ),
-                          ),
+                            const SizedBox(height: 16),
+                            _buildDropdown(context),
+                            const SizedBox(height: 16),
+                            _buildTextField(
+                              context,
+                              label: 'Tutar',
+                              controller: _amountController,
+                              keyboardType: TextInputType.number,
+                              suffixText: currencyProvider.currencySymbol,
+                            ),
+                            const SizedBox(height: 16),
+                            _buildTextField(
+                              context,
+                              label: 'Aciklama',
+                              controller: _descriptionController,
+                              hintText: 'Aciklama girin',
+                            ),
+                            const SizedBox(height: 16),
+                            Text('Tarih', style: Theme.of(context).textTheme.titleMedium),
+                            const SizedBox(height: 8),
+                            InkWell(
+                              onTap: _selectDate,
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                decoration: BoxDecoration(
+                                  color: AppColors.income.withOpacity(0.06),
+                                  border: Border.all(color: AppColors.income.withOpacity(0.3)),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.calendar_month_rounded, color: AppColors.income, size: 20),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      DateFormat('dd MMM yyyy  •  HH:mm', 'tr_TR').format(_selectedDate),
+                                      style: Theme.of(context).textTheme.bodyLarge,
+                                    ),
+                                    const Spacer(),
+                                    Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.income),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            _buildButtons(context),
+                          ],
                         ),
-                        const SizedBox(height: 24),
-                        _buildButtons(context),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -216,12 +223,14 @@ class _IncomePopupState extends State<IncomePopup> {
     );
   }
 
-  Widget _buildTextField(BuildContext context,
-      {required String label,
-      required TextEditingController controller,
-      TextInputType? keyboardType,
-      String? hintText,
-      String? suffixText}) {
+  Widget _buildTextField(
+    BuildContext context, {
+    required String label,
+    required TextEditingController controller,
+    TextInputType? keyboardType,
+    String? hintText,
+    String? suffixText,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -254,7 +263,7 @@ class _IncomePopupState extends State<IncomePopup> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
-            child: const Text('İptal'),
+            child: const Text('Iptal'),
           ),
         ),
         const SizedBox(width: 16),
@@ -272,7 +281,7 @@ class _IncomePopupState extends State<IncomePopup> {
   void _onSubmit() {
     if (_amountController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen bir tutar girin'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Lutfen bir tutar girin'), backgroundColor: Colors.red),
       );
       return;
     }
@@ -282,14 +291,14 @@ class _IncomePopupState extends State<IncomePopup> {
       amount = double.parse(_amountController.text.replaceAll(',', '.'));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Geçerli bir tutar girin'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Gecerli bir tutar girin'), backgroundColor: Colors.red),
       );
       return;
     }
 
     if (amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tutar 0\'dan büyük olmalıdır'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Tutar 0\'dan buyuk olmalidir'), backgroundColor: Colors.red),
       );
       return;
     }
@@ -303,13 +312,14 @@ class _IncomePopupState extends State<IncomePopup> {
         dateTime: _selectedDate,
       );
       widget.onSubmit(updatedTransaction);
-    } else {
-      widget.onAdd(
-        _selectedCategory,
-        amount,
-        _descriptionController.text,
-        _selectedDate,
-      );
+      return;
     }
+
+    widget.onAdd(
+      _selectedCategory,
+      amount,
+      _descriptionController.text,
+      _selectedDate,
+    );
   }
 }

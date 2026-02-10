@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../models/transaction.dart';
+
 import '../constants/app_colors.dart';
+import '../models/transaction.dart';
 import '../providers/currency_provider.dart';
 import 'date_picker_dialog.dart';
 
@@ -80,7 +81,7 @@ class _ExpensePopupState extends State<ExpensePopup> {
       return;
     }
 
-    double? amount = double.tryParse(_amountController.text.replaceAll(',', '.'));
+    final amount = double.tryParse(_amountController.text.replaceAll(',', '.'));
     if (amount == null) {
       _showSnackBar('Geçerli bir tutar girin');
       return;
@@ -100,14 +101,15 @@ class _ExpensePopupState extends State<ExpensePopup> {
         dateTime: _selectedDate,
       );
       widget.onSubmit(updatedTransaction);
-    } else {
-      widget.onAdd(
-        _selectedCategory,
-        amount,
-        _descriptionController.text,
-        _selectedDate,
-      );
+      return;
     }
+
+    widget.onAdd(
+      _selectedCategory,
+      amount,
+      _descriptionController.text,
+      _selectedDate,
+    );
   }
 
   void _showSnackBar(String message) {
@@ -127,134 +129,125 @@ class _ExpensePopupState extends State<ExpensePopup> {
         color: Colors.black.withOpacity(0.5),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: EdgeInsets.only(
-                top: 16,
-                bottom: bottomInset + 16,
-                left: constraints.maxWidth * 0.05,
-                right: constraints.maxWidth * 0.05,
-              ),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - bottomInset - 32,
+            final horizontalPadding = constraints.maxWidth * 0.05;
+            final availableHeight = constraints.maxHeight - bottomInset - 24;
+            final maxCardHeight = availableHeight > 260 ? availableHeight : constraints.maxHeight * 0.9;
+
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  12,
+                  horizontalPadding,
+                  12 + bottomInset,
                 ),
-                child: Center(
-                  child: Material(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.remove_circle_outline, color: AppColors.expense),
-                              const SizedBox(width: 8),
-                              Text(
-                                widget.initialTransaction != null ? 'Gider Düzenle' : 'Gider Ekle',
-                                style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                                      color: AppColors.expense,
-                                    ),
-                              ),
-                              const Spacer(),
-                              IconButton(
-                                icon: const Icon(Icons.close),
-                                onPressed: widget.onCancel,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Kategori
-                          _buildLabel('Kategori'),
-                          _buildDropdown(),
-
-                          const SizedBox(height: 16),
-
-                          // Tutar
-                          _buildLabel('Tutar'),
-                          TextField(
-                            controller: _amountController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            decoration: InputDecoration(
-                              hintText: '0.00',
-                              suffixText: currencyProvider.currencySymbol,
-                            ),
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          // Açıklama
-                          _buildLabel('Açıklama'),
-                          TextField(
-                            controller: _descriptionController,
-                            decoration: const InputDecoration(hintText: 'Açıklama girin'),
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          // Tarih
-                          _buildLabel('Tarih'),
-                          InkWell(
-                            onTap: _selectDate,
-                            borderRadius: BorderRadius.circular(8),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                              decoration: BoxDecoration(
-                                color: AppColors.expense.withOpacity(0.06),
-                                border: Border.all(color: AppColors.expense.withOpacity(0.3)),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.calendar_month_rounded, color: AppColors.expense, size: 20),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    DateFormat('dd MMM yyyy  •  HH:mm', 'tr_TR').format(_selectedDate),
-                                    style: Theme.of(context).textTheme.bodyLarge,
-                                  ),
-                                  const Spacer(),
-                                  Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.expense),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // Butonlar
-                          Row(
-                            children: [
-                              Expanded(
-                                child: ElevatedButton(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: maxCardHeight),
+                    child: Material(
+                      borderRadius: BorderRadius.circular(16),
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.remove_circle_outline, color: AppColors.expense),
+                                const SizedBox(width: 8),
+                                Text(
+                                  widget.initialTransaction != null ? 'Gider Duzenle' : 'Gider Ekle',
+                                  style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                                        color: AppColors.expense,
+                                      ),
+                                ),
+                                const Spacer(),
+                                IconButton(
+                                  icon: const Icon(Icons.close),
                                   onPressed: widget.onCancel,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Theme.of(context).disabledColor,
-                                    foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            _buildLabel('Kategori'),
+                            _buildDropdown(),
+                            const SizedBox(height: 16),
+                            _buildLabel('Tutar'),
+                            TextField(
+                              controller: _amountController,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              decoration: InputDecoration(
+                                hintText: '0.00',
+                                suffixText: currencyProvider.currencySymbol,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            _buildLabel('Aciklama'),
+                            TextField(
+                              controller: _descriptionController,
+                              decoration: const InputDecoration(hintText: 'Aciklama girin'),
+                            ),
+                            const SizedBox(height: 16),
+                            _buildLabel('Tarih'),
+                            InkWell(
+                              onTap: _selectDate,
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                decoration: BoxDecoration(
+                                  color: AppColors.expense.withOpacity(0.06),
+                                  border: Border.all(color: AppColors.expense.withOpacity(0.3)),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.calendar_month_rounded, color: AppColors.expense, size: 20),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      DateFormat('dd MMM yyyy  •  HH:mm', 'tr_TR').format(_selectedDate),
+                                      style: Theme.of(context).textTheme.bodyLarge,
                                     ),
-                                  ),
-                                  child: const Text('İptal'),
+                                    const Spacer(),
+                                    Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.expense),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: ElevatedButton(
-                                  onPressed: _handleSubmit,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.expense,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
+                            ),
+                            const SizedBox(height: 24),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: widget.onCancel,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Theme.of(context).disabledColor,
+                                      foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
                                     ),
+                                    child: const Text('Iptal'),
                                   ),
-                                  child: const Text('Ekle'),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: _handleSubmit,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.expense,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    child: const Text('Ekle'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
