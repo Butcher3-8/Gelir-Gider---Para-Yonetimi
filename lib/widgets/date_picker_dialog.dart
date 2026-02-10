@@ -12,6 +12,7 @@ class AppDatePickerDialog extends StatefulWidget {
   final ValueChanged<DateTime> onSelect;
   final VoidCallback onCancel;
   final bool showDayAndTime;
+  final bool showDayOnly;
 
   const AppDatePickerDialog({
     super.key,
@@ -20,6 +21,7 @@ class AppDatePickerDialog extends StatefulWidget {
     required this.onSelect,
     required this.onCancel,
     this.showDayAndTime = false,
+    this.showDayOnly = false,
   });
 
   @override
@@ -52,6 +54,9 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
   int _daysInMonth(int year, int month) {
     return DateTime(year, month + 1, 0).day;
   }
+
+  bool get _showDaySelector => widget.showDayAndTime || widget.showDayOnly;
+  bool get _showTimeSelector => widget.showDayAndTime;
 
   void _goToYearMonth(int year, int month) {
     final maxDays = _daysInMonth(year, month);
@@ -158,7 +163,7 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
                           ],
                         ),
                       ),
-                      if (widget.showDayAndTime) ...[
+                      if (_showDaySelector) ...[
                         const SizedBox(height: 12),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -176,26 +181,28 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              Expanded(
-                                child: _DropdownTile<int>(
-                                  value: _selectedHour,
-                                  items: List.generate(24, (i) => i),
-                                  valueLabel: (v) => v.toString().padLeft(2, '0'),
-                                  onChanged: (h) => setState(() => _selectedHour = h!),
+                              if (_showTimeSelector) ...[
+                                Expanded(
+                                  child: _DropdownTile<int>(
+                                    value: _selectedHour,
+                                    items: List.generate(24, (i) => i),
+                                    valueLabel: (v) => v.toString().padLeft(2, '0'),
+                                    onChanged: (h) => setState(() => _selectedHour = h!),
+                                  ),
                                 ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 4),
-                                child: Text(':', style: Theme.of(context).textTheme.titleLarge),
-                              ),
-                              Expanded(
-                                child: _DropdownTile<int>(
-                                  value: _selectedMinute,
-                                  items: List.generate(60, (i) => i),
-                                  valueLabel: (v) => v.toString().padLeft(2, '0'),
-                                  onChanged: (m) => setState(() => _selectedMinute = m!),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  child: Text(':', style: Theme.of(context).textTheme.titleLarge),
                                 ),
-                              ),
+                                Expanded(
+                                  child: _DropdownTile<int>(
+                                    value: _selectedMinute,
+                                    items: List.generate(60, (i) => i),
+                                    valueLabel: (v) => v.toString().padLeft(2, '0'),
+                                    onChanged: (m) => setState(() => _selectedMinute = m!),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -209,8 +216,10 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
                               child: OutlinedButton.icon(
                                 onPressed: () {
                                   final now = DateTime.now();
-                                  if (widget.showDayAndTime) {
+                                  if (_showTimeSelector) {
                                     widget.onSelect(now);
+                                  } else if (_showDaySelector) {
+                                    widget.onSelect(DateTime(now.year, now.month, now.day));
                                   } else if (now.year < widget.maxDate.year ||
                                       (now.year == widget.maxDate.year && now.month <= widget.maxDate.month)) {
                                     widget.onSelect(DateTime(now.year, now.month, 1));
@@ -230,13 +239,19 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
                               flex: 2,
                               child: FilledButton.icon(
                                 onPressed: () {
-                                  if (widget.showDayAndTime) {
+                                  if (_showTimeSelector) {
                                     widget.onSelect(DateTime(
                                       _focusedDay.year,
                                       _focusedDay.month,
                                       _selectedDay,
                                       _selectedHour,
                                       _selectedMinute,
+                                    ));
+                                  } else if (_showDaySelector) {
+                                    widget.onSelect(DateTime(
+                                      _focusedDay.year,
+                                      _focusedDay.month,
+                                      _selectedDay,
                                     ));
                                   } else {
                                     widget.onSelect(DateTime(_focusedDay.year, _focusedDay.month, 1));

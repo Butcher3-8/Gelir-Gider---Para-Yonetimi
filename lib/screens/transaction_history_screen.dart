@@ -16,18 +16,19 @@ class TransactionHistoryScreen extends StatefulWidget {
 }
 
 class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
-  /// Seçilen ay (gün her zaman 1 kullanılır, sadece yıl/ay önemli).
+  /// Seçilen gün.
   DateTime selectedDate = DateTime.now();
 
   List<Transaction> get filteredTransactions {
     return widget.transactions.where((tx) =>
         tx.dateTime.year == selectedDate.year &&
-        tx.dateTime.month == selectedDate.month).toList();
+        tx.dateTime.month == selectedDate.month &&
+        tx.dateTime.day == selectedDate.day).toList();
   }
 
   void _selectDate() {
     final now = DateTime.now();
-    final maxDate = DateTime(now.year, now.month, 1);
+    final maxDate = DateTime(now.year, now.month, now.day);
 
     showDialog<void>(
       context: context,
@@ -35,8 +36,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       builder: (context) => AppDatePickerDialog(
         initialDate: selectedDate,
         maxDate: maxDate,
+        showDayOnly: true,
         onSelect: (date) {
-          setState(() => selectedDate = DateTime(date.year, date.month, 1));
+          setState(() => selectedDate = DateTime(date.year, date.month, date.day));
           Navigator.of(context).pop();
         },
         onCancel: () => Navigator.of(context).pop(),
@@ -46,13 +48,17 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
   void _changeDate(bool isNext) {
     setState(() {
+      final today = DateTime.now();
       if (isNext) {
-        if (selectedDate.year < DateTime.now().year ||
-            selectedDate.month < DateTime.now().month) {
-          selectedDate = DateTime(selectedDate.year, selectedDate.month + 1, 1);
+        final isBeforeToday = selectedDate.year < today.year ||
+            (selectedDate.year == today.year &&
+                (selectedDate.month < today.month ||
+                    (selectedDate.month == today.month && selectedDate.day < today.day)));
+        if (isBeforeToday) {
+          selectedDate = selectedDate.add(const Duration(days: 1));
         }
       } else {
-        selectedDate = DateTime(selectedDate.year, selectedDate.month - 1, 1);
+        selectedDate = selectedDate.subtract(const Duration(days: 1));
       }
     });
   }
@@ -142,7 +148,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                               child: AnimatedSwitcher(
                                 duration: const Duration(milliseconds: 250),
                                 child: Text(
-                                  DateFormat('MMMM yyyy', 'tr_TR').format(selectedDate),
+                                  DateFormat('dd MMMM yyyy', 'tr_TR').format(selectedDate),
                                   key: ValueKey(selectedDate),
                                   textAlign: TextAlign.center,
                                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -159,7 +165,10 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       _NavButton(
                         icon: Icons.chevron_right_rounded,
                         onPressed: (selectedDate.year < DateTime.now().year ||
-                                selectedDate.month < DateTime.now().month)
+                                (selectedDate.year == DateTime.now().year &&
+                                    (selectedDate.month < DateTime.now().month ||
+                                        (selectedDate.month == DateTime.now().month &&
+                                            selectedDate.day < DateTime.now().day))))
                             ? () => _changeDate(true)
                             : null,
                       ),
