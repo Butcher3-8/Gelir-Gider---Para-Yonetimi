@@ -37,12 +37,8 @@ class _ExpensePopupState extends State<ExpensePopup> {
   void initState() {
     super.initState();
     _selectedCategory = widget.initialTransaction?.category ?? widget.categories.first;
-    _amountController = TextEditingController(
-      text: widget.initialTransaction?.amount.toString() ?? '',
-    );
-    _descriptionController = TextEditingController(
-      text: widget.initialTransaction?.description ?? '',
-    );
+    _amountController = TextEditingController(text: widget.initialTransaction?.amount.toString() ?? '');
+    _descriptionController = TextEditingController(text: widget.initialTransaction?.description ?? '');
     _selectedDate = widget.initialTransaction?.dateTime ?? DateTime.now();
   }
 
@@ -56,7 +52,6 @@ class _ExpensePopupState extends State<ExpensePopup> {
   void _selectDate() {
     final now = DateTime.now();
     final maxDate = DateTime(now.year, now.month, now.day);
-
     showDialog<void>(
       context: context,
       barrierColor: Colors.transparent,
@@ -65,13 +60,17 @@ class _ExpensePopupState extends State<ExpensePopup> {
         maxDate: maxDate,
         showDayAndTime: true,
         onSelect: (date) {
-          setState(() {
-            _selectedDate = date;
-          });
+          setState(() => _selectedDate = date);
           Navigator.of(ctx).pop();
         },
         onCancel: () => Navigator.of(ctx).pop(),
       ),
+    );
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
@@ -80,42 +79,30 @@ class _ExpensePopupState extends State<ExpensePopup> {
       _showSnackBar('Lütfen bir tutar girin');
       return;
     }
-
     final amount = double.tryParse(_amountController.text.replaceAll(',', '.'));
     if (amount == null) {
       _showSnackBar('Geçerli bir tutar girin');
       return;
     }
-
     if (amount <= 0) {
       _showSnackBar('Tutar 0\'dan büyük olmalıdır');
       return;
     }
 
     if (widget.initialTransaction != null) {
-      final updatedTransaction = Transaction(
-        type: 'expense',
-        category: _selectedCategory,
-        amount: amount,
-        description: _descriptionController.text,
-        dateTime: _selectedDate,
+      widget.onSubmit(
+        Transaction(
+          type: 'expense',
+          category: _selectedCategory,
+          amount: amount,
+          description: _descriptionController.text,
+          dateTime: _selectedDate,
+        ),
       );
-      widget.onSubmit(updatedTransaction);
       return;
     }
 
-    widget.onAdd(
-      _selectedCategory,
-      amount,
-      _descriptionController.text,
-      _selectedDate,
-    );
-  }
-
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
-    );
+    widget.onAdd(_selectedCategory, amount, _descriptionController.text, _selectedDate);
   }
 
   @override
@@ -135,17 +122,15 @@ class _ExpensePopupState extends State<ExpensePopup> {
 
             return SafeArea(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  12,
-                  horizontalPadding,
-                  12 + bottomInset,
-                ),
+                padding: EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 12 + bottomInset),
                 child: Align(
                   alignment: Alignment.topCenter,
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxHeight: maxCardHeight),
                     child: Material(
+                      color: Theme.of(context).cardColor,
+                      elevation: 12,
+                      shadowColor: Colors.black.withOpacity(0.25),
                       borderRadius: BorderRadius.circular(16),
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(16),
@@ -154,17 +139,30 @@ class _ExpensePopupState extends State<ExpensePopup> {
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.remove_circle_outline, color: AppColors.expense),
-                                const SizedBox(width: 8),
-                                Text(
-                                  widget.initialTransaction != null ? 'Gider Duzenle' : 'Gider Ekle',
-                                  style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                                        color: AppColors.expense,
-                                      ),
+                                Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.expense.withOpacity(0.14),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.remove_circle_outline, color: AppColors.expense, size: 22),
                                 ),
-                                const Spacer(),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    widget.initialTransaction != null ? 'Gider Düzenle' : 'Gider Ekle',
+                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                          color: AppColors.expense,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                  ),
+                                ),
                                 IconButton(
-                                  icon: const Icon(Icons.close),
+                                  icon: const Icon(Icons.close_rounded),
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: Theme.of(context).dividerColor.withOpacity(0.18),
+                                  ),
                                   onPressed: widget.onCancel,
                                 ),
                               ],
@@ -179,14 +177,22 @@ class _ExpensePopupState extends State<ExpensePopup> {
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
                               decoration: InputDecoration(
                                 hintText: '0.00',
+                                prefixIcon: const Icon(Icons.payments_outlined),
                                 suffixText: currencyProvider.currencySymbol,
+                                filled: true,
+                                fillColor: AppColors.expense.withOpacity(0.05),
                               ),
                             ),
                             const SizedBox(height: 16),
-                            _buildLabel('Aciklama'),
+                            _buildLabel('Açıklama'),
                             TextField(
                               controller: _descriptionController,
-                              decoration: const InputDecoration(hintText: 'Aciklama girin'),
+                              decoration: InputDecoration(
+                                hintText: 'Açıklama girin',
+                                prefixIcon: const Icon(Icons.notes_rounded),
+                                filled: true,
+                                fillColor: AppColors.expense.withOpacity(0.05),
+                              ),
                             ),
                             const SizedBox(height: 16),
                             _buildLabel('Tarih'),
@@ -202,14 +208,14 @@ class _ExpensePopupState extends State<ExpensePopup> {
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(Icons.calendar_month_rounded, color: AppColors.expense, size: 20),
+                                    const Icon(Icons.calendar_month_rounded, color: AppColors.expense, size: 20),
                                     const SizedBox(width: 10),
                                     Text(
                                       DateFormat('dd MMM yyyy  •  HH:mm', 'tr_TR').format(_selectedDate),
                                       style: Theme.of(context).textTheme.bodyLarge,
                                     ),
                                     const Spacer(),
-                                    Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.expense),
+                                    const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.expense),
                                   ],
                                 ),
                               ),
@@ -223,11 +229,10 @@ class _ExpensePopupState extends State<ExpensePopup> {
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Theme.of(context).disabledColor,
                                       foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      elevation: 0,
                                     ),
-                                    child: const Text('Iptal'),
+                                    child: const Text('İptal'),
                                   ),
                                 ),
                                 const SizedBox(width: 16),
@@ -237,9 +242,8 @@ class _ExpensePopupState extends State<ExpensePopup> {
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.expense,
                                       foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      elevation: 0,
                                     ),
                                     child: const Text('Ekle'),
                                   ),
@@ -271,7 +275,8 @@ class _ExpensePopupState extends State<ExpensePopup> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        border: Border.all(color: Theme.of(context).dividerColor),
+        color: AppColors.expense.withOpacity(0.05),
+        border: Border.all(color: AppColors.expense.withOpacity(0.3)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: DropdownButton<String>(
@@ -284,11 +289,7 @@ class _ExpensePopupState extends State<ExpensePopup> {
             child: Text(category),
           );
         }).toList(),
-        onChanged: (value) {
-          setState(() {
-            _selectedCategory = value!;
-          });
-        },
+        onChanged: (value) => setState(() => _selectedCategory = value!),
       ),
     );
   }

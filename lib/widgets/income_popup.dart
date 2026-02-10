@@ -58,7 +58,6 @@ class _IncomePopupState extends State<IncomePopup> {
   void _selectDate() {
     final now = DateTime.now();
     final maxDate = DateTime(now.year, now.month, now.day);
-
     showDialog<void>(
       context: context,
       barrierColor: Colors.transparent,
@@ -67,14 +66,53 @@ class _IncomePopupState extends State<IncomePopup> {
         maxDate: maxDate,
         showDayAndTime: true,
         onSelect: (date) {
-          setState(() {
-            _selectedDate = date;
-          });
+          setState(() => _selectedDate = date);
           Navigator.of(ctx).pop();
         },
         onCancel: () => Navigator.of(ctx).pop(),
       ),
     );
+  }
+
+  void _onSubmit() {
+    if (_amountController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lütfen bir tutar girin'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    double amount;
+    try {
+      amount = double.parse(_amountController.text.replaceAll(',', '.'));
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Geçerli bir tutar girin'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if (amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tutar 0\'dan büyük olmalıdır'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if (widget.initialTransaction != null) {
+      widget.onSubmit(
+        Transaction(
+          type: 'income',
+          category: _selectedCategory,
+          amount: amount,
+          description: _descriptionController.text,
+          dateTime: _selectedDate,
+        ),
+      );
+      return;
+    }
+
+    widget.onAdd(_selectedCategory, amount, _descriptionController.text, _selectedDate);
   }
 
   @override
@@ -94,12 +132,7 @@ class _IncomePopupState extends State<IncomePopup> {
 
             return SafeArea(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  12,
-                  horizontalPadding,
-                  12 + bottomInset,
-                ),
+                padding: EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 12 + bottomInset),
                 child: Align(
                   alignment: Alignment.topCenter,
                   child: ConstrainedBox(
@@ -108,6 +141,13 @@ class _IncomePopupState extends State<IncomePopup> {
                       decoration: BoxDecoration(
                         color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.22),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(16),
@@ -117,15 +157,30 @@ class _IncomePopupState extends State<IncomePopup> {
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.add_circle_outline, color: AppColors.income),
-                                const SizedBox(width: 8),
-                                Text(
-                                  widget.initialTransaction != null ? 'Gelir Duzenle' : 'Gelir Ekle',
-                                  style: Theme.of(context).textTheme.titleLarge!.copyWith(color: AppColors.income),
+                                Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.income.withOpacity(0.14),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.add_circle_outline, color: AppColors.income, size: 22),
                                 ),
-                                const Spacer(),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    widget.initialTransaction != null ? 'Gelir Düzenle' : 'Gelir Ekle',
+                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                          color: AppColors.income,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                  ),
+                                ),
                                 IconButton(
-                                  icon: Icon(Icons.close, color: Theme.of(context).iconTheme.color),
+                                  icon: Icon(Icons.close_rounded, color: Theme.of(context).iconTheme.color),
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: Theme.of(context).dividerColor.withOpacity(0.18),
+                                  ),
                                   onPressed: widget.onCancel,
                                 ),
                               ],
@@ -139,13 +194,15 @@ class _IncomePopupState extends State<IncomePopup> {
                               controller: _amountController,
                               keyboardType: TextInputType.number,
                               suffixText: currencyProvider.currencySymbol,
+                              prefixIcon: Icons.payments_outlined,
                             ),
                             const SizedBox(height: 16),
                             _buildTextField(
                               context,
-                              label: 'Aciklama',
+                              label: 'Açıklama',
                               controller: _descriptionController,
-                              hintText: 'Aciklama girin',
+                              hintText: 'Açıklama girin',
+                              prefixIcon: Icons.notes_rounded,
                             ),
                             const SizedBox(height: 16),
                             Text('Tarih', style: Theme.of(context).textTheme.titleMedium),
@@ -162,14 +219,14 @@ class _IncomePopupState extends State<IncomePopup> {
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(Icons.calendar_month_rounded, color: AppColors.income, size: 20),
+                                    const Icon(Icons.calendar_month_rounded, color: AppColors.income, size: 20),
                                     const SizedBox(width: 10),
                                     Text(
                                       DateFormat('dd MMM yyyy  •  HH:mm', 'tr_TR').format(_selectedDate),
                                       style: Theme.of(context).textTheme.bodyLarge,
                                     ),
                                     const Spacer(),
-                                    Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.income),
+                                    const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.income),
                                   ],
                                 ),
                               ),
@@ -199,7 +256,8 @@ class _IncomePopupState extends State<IncomePopup> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            border: Border.all(color: Theme.of(context).dividerColor),
+            color: AppColors.income.withOpacity(0.05),
+            border: Border.all(color: AppColors.income.withOpacity(0.3)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: DropdownButton<String>(
@@ -212,11 +270,7 @@ class _IncomePopupState extends State<IncomePopup> {
                 child: Text(category, style: Theme.of(context).textTheme.bodyLarge),
               );
             }).toList(),
-            onChanged: (value) {
-              setState(() {
-                _selectedCategory = value!;
-              });
-            },
+            onChanged: (value) => setState(() => _selectedCategory = value!),
           ),
         ),
       ],
@@ -230,6 +284,7 @@ class _IncomePopupState extends State<IncomePopup> {
     TextInputType? keyboardType,
     String? hintText,
     String? suffixText,
+    IconData? prefixIcon,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,6 +297,9 @@ class _IncomePopupState extends State<IncomePopup> {
           decoration: InputDecoration(
             hintText: hintText,
             suffixText: suffixText,
+            prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+            filled: true,
+            fillColor: AppColors.income.withOpacity(0.05),
             border: Theme.of(context).inputDecorationTheme.border,
             enabledBorder: Theme.of(context).inputDecorationTheme.enabledBorder,
             focusedBorder: Theme.of(context).inputDecorationTheme.focusedBorder,
@@ -260,10 +318,11 @@ class _IncomePopupState extends State<IncomePopup> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).disabledColor,
               foregroundColor: Theme.of(context).textTheme.bodyLarge!.color,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               padding: const EdgeInsets.symmetric(vertical: 16),
+              elevation: 0,
             ),
-            child: const Text('Iptal'),
+            child: const Text('İptal'),
           ),
         ),
         const SizedBox(width: 16),
@@ -275,51 +334,6 @@ class _IncomePopupState extends State<IncomePopup> {
           ),
         ),
       ],
-    );
-  }
-
-  void _onSubmit() {
-    if (_amountController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lutfen bir tutar girin'), backgroundColor: Colors.red),
-      );
-      return;
-    }
-
-    double amount;
-    try {
-      amount = double.parse(_amountController.text.replaceAll(',', '.'));
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gecerli bir tutar girin'), backgroundColor: Colors.red),
-      );
-      return;
-    }
-
-    if (amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tutar 0\'dan buyuk olmalidir'), backgroundColor: Colors.red),
-      );
-      return;
-    }
-
-    if (widget.initialTransaction != null) {
-      final updatedTransaction = Transaction(
-        type: 'income',
-        category: _selectedCategory,
-        amount: amount,
-        description: _descriptionController.text,
-        dateTime: _selectedDate,
-      );
-      widget.onSubmit(updatedTransaction);
-      return;
-    }
-
-    widget.onAdd(
-      _selectedCategory,
-      amount,
-      _descriptionController.text,
-      _selectedDate,
     );
   }
 }
