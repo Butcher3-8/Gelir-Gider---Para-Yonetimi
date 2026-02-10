@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/currency_provider.dart';
 import '../providers/theme_provider.dart';
+import '../screens/privacy_policy_screen.dart';
 import '../services/backup_service.dart';
 
 class CustomDrawer extends StatelessWidget {
@@ -206,6 +207,27 @@ class CustomDrawer extends StatelessWidget {
                       onTap: () => _importBackup(context),
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              _card(
+                context,
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  leading: const Icon(Icons.privacy_tip_outlined, size: 22),
+                  title: Text(
+                    'Gizlilik Politikası',
+                    style: textTheme.bodyMedium,
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const PrivacyPolicyScreen(),
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 16),
